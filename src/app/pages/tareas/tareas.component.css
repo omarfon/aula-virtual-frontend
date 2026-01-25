@@ -1,0 +1,62 @@
+/* Estilos para el componente de tareas */
+
+/* Animación para el modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fixed > div {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Efecto hover en cards de tareas */
+.hover\:shadow-xl:hover {
+  transform: translateY(-2px);
+}
+
+/* Transiciones suaves */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, transform, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Zona de drop de archivos */
+.border-dashed:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Scroll suave en modal */
+.max-h-\[90vh\] {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.max-h-\[90vh\]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-\[90vh\]::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.max-h-\[90vh\]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.max-h-\[90vh\]::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Efecto de pulso en botones */
+button:active {
+  transform: scale(0.98);
+}

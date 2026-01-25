@@ -1,0 +1,830 @@
+<div class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 p-4 sm:p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Administración de Cursos</h1>
+            <p class="text-sm sm:text-base text-gray-600">Crea y gestiona cursos completos con unidades, temas, tareas y exámenes</p>
+        </div>
+
+        <!-- Mensajes de notificación -->
+        <div *ngIf="cargando" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-lg shadow animate-pulse">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="font-semibold">Procesando...</p>
+            </div>
+        </div>
+
+        <div *ngIf="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg shadow">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="font-semibold">{{ error }}</p>
+                </div>
+                <button (click)="error = null" class="text-red-500 hover:text-red-700">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="mensajeExito" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="font-semibold">{{ mensajeExito }}</p>
+                </div>
+                <button (click)="mensajeExito = null" class="text-green-500 hover:text-green-700">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Listado de Cursos Creados -->
+        <div *ngIf="!mostrarFormularioNuevo" class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
+                  Cursos Creados ({{ cursos.length > 0 ? cursosFiltrados.length : 0 }})
+                </h2>
+                <div class="flex gap-2">
+                    <button (click)="mostrarFormularioNuevo = true"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all whitespace-nowrap">
+                        ➕ Nuevo Curso
+                    </button>
+                </div>
+            </div>
+
+            <!-- Indicador de carga -->
+            <div *ngIf="cargando && cursos.length === 0" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600">Cargando cursos...</p>
+            </div>
+
+            <!-- Mensaje cuando no hay cursos -->
+            <div *ngIf="!cargando && cursos.length === 0" class="text-center py-12">
+                <div class="text-6xl mb-4">📚</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">No hay cursos creados</h3>
+                <p class="text-gray-600 mb-6">Comienza creando tu primer curso</p>
+                <button (click)="mostrarFormularioNuevo = true"
+                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                    ➕ Crear Primer Curso
+                </button>
+            </div>
+
+            <!-- Buscador -->
+            <div *ngIf="cursos.length > 0" class="mb-6">
+                <div class="relative">
+                    <input type="text" [(ngModel)]="terminoBusqueda" (ngModelChange)="onBusquedaChange()"
+                        placeholder="🔍 Buscar por título, instructor, categoría o nivel..."
+                        class="w-full px-4 py-3 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <button *ngIf="terminoBusqueda" (click)="terminoBusqueda = ''; onBusquedaChange()"
+                        class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                        ✕
+                    </button>
+                </div>
+                <p *ngIf="terminoBusqueda && cursosFiltrados.length === 0" class="mt-2 text-sm text-gray-500">
+                    No se encontraron cursos que coincidan con "{{ terminoBusqueda }}"
+                </p>
+                <p *ngIf="terminoBusqueda && cursosFiltrados.length > 0" class="mt-2 text-sm text-gray-500">
+                    Mostrando {{ cursosFiltrados.length }} de {{ cursos.length }} cursos
+                </p>
+            </div>
+
+            <div *ngIf="cursos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <app-curso-card 
+                  *ngFor="let curso of cursosPaginados; trackBy: trackByCurso"
+                  [curso]="curso"
+                  (editar)="editarCursoPorObjeto(curso)"
+                  (eliminar)="eliminarCursoPorObjeto(curso)">
+                </app-curso-card>
+            </div>
+
+            <!-- Paginación -->
+            <div *ngIf="cursosFiltrados.length > cursosPorPagina" class="mt-8 flex justify-center items-center gap-2">
+                <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 1"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← Anterior
+                </button>
+                
+                <div class="flex gap-2">
+                    <button *ngFor="let pagina of [].constructor(totalPaginas); let i = index" 
+                        (click)="irAPagina(i + 1)"
+                        [class.bg-blue-600]="paginaActual === i + 1"
+                        [class.text-white]="paginaActual === i + 1"
+                        [class.bg-gray-200]="paginaActual !== i + 1"
+                        [class.text-gray-700]="paginaActual !== i + 1"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
+                        {{ i + 1 }}
+                    </button>
+                </div>
+
+                <button (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual === totalPaginas"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario de Creación/Edición -->
+        <div *ngIf="mostrarFormularioNuevo">
+            <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-white">
+                        {{ cursoEditandoIndex !== null ? '✏️ Editando: ' + curso.titulo : '➕ Nuevo Curso' }}
+                    </h2>
+                    <button *ngIf="cursos.length > 0" (click)="mostrarFormularioNuevo = false; reiniciarFormulario()"
+                        class="px-4 py-2 bg-white text-orange-600 rounded-lg hover:bg-orange-50 transition-all font-semibold">
+                        📋 Ver Listado
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegación de pestañas -->
+            <div class="bg-white rounded-xl shadow-lg mb-6">
+                <div class="flex border-b border-gray-200">
+                    <button (click)="cambiarSeccion('basico')" [class.border-b-4]="seccionActiva === 'basico'"
+                        [class.border-blue-600]="seccionActiva === 'basico'"
+                        [class.text-blue-600]="seccionActiva === 'basico'"
+                        class="flex-1 px-6 py-4 font-semibold transition-all hover:bg-blue-50">
+                        📋 Datos Básicos
+                    </button>
+                    <button (click)="cambiarSeccion('unidades')" [class.border-b-4]="seccionActiva === 'unidades'"
+                        [class.border-blue-600]="seccionActiva === 'unidades'"
+                        [class.text-blue-600]="seccionActiva === 'unidades'"
+                        class="flex-1 px-6 py-4 font-semibold transition-all hover:bg-blue-50">
+                        📚 Unidades y Temas
+                    </button>
+                    <button (click)="cambiarSeccion('tareas')" [class.border-b-4]="seccionActiva === 'tareas'"
+                        [class.border-blue-600]="seccionActiva === 'tareas'"
+                        [class.text-blue-600]="seccionActiva === 'tareas'"
+                        class="flex-1 px-6 py-4 font-semibold transition-all hover:bg-blue-50">
+                        ✏️ Tareas
+                    </button>
+                    <button (click)="cambiarSeccion('examenes')" [class.border-b-4]="seccionActiva === 'examenes'"
+                        [class.border-blue-600]="seccionActiva === 'examenes'"
+                        [class.text-blue-600]="seccionActiva === 'examenes'"
+                        class="flex-1 px-6 py-4 font-semibold transition-all hover:bg-blue-50">
+                        📝 Exámenes
+                    </button>
+                </div>
+
+                <!-- Sección: Datos Básicos -->
+                <div *ngIf="seccionActiva === 'basico'" class="p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Información General del Curso</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Título del Curso *</label>
+                            <input type="text" [(ngModel)]="curso.titulo"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                placeholder="Ej: Seguridad de la Información">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                            <textarea [(ngModel)]="curso.descripcion" rows="4"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                placeholder="Describe el contenido y objetivos del curso"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Instructor *</label>
+                            <select [(ngModel)]="curso.instructor"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                                <option value="">Selecciona un instructor</option>
+                                <option *ngFor="let instructor of instructoresDisponibles; trackBy: trackByIndex" [value]="instructor">
+                                    {{ instructor }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
+                            <select [(ngModel)]="curso.nivel"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                                <option value="Principiante">Principiante</option>
+                                <option value="Intermedio">Intermedio</option>
+                                <option value="Avanzado">Avanzado</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Categoría</label>
+                            <select [(ngModel)]="curso.categoria"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                                <option value="">Selecciona una categoría</option>
+                                <option *ngFor="let categoria of categoriasDisponibles; trackBy: trackByIndex" [value]="categoria">
+                                    {{ categoria }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">URL de Imagen</label>
+                            <input type="text" [(ngModel)]="curso.imagen"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                placeholder="https://...">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Duración Total (calculada
+                                automáticamente)</label>
+                            <div class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-semibold">
+                                {{ curso.duracionTotal }} horas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Unidades y Temas -->
+                <div *ngIf="seccionActiva === 'unidades'" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Unidades y Temas</h2>
+                        <button (click)="abrirModalUnidad()"
+                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold">
+                            + Nueva Unidad
+                        </button>
+                    </div>
+
+                    <div *ngIf="curso.unidades && curso.unidades.length === 0" class="text-center py-12 text-gray-500">
+                        <p class="text-lg">No hay unidades creadas aún</p>
+                        <p class="text-sm">Haz clic en "Nueva Unidad" para comenzar</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div *ngFor="let unidad of curso.unidades; let i = index; trackBy: trackByUnidad"
+                            class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
+                            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center cursor-pointer"
+                                (click)="toggleUnidad(i)">
+                                <div class="flex items-center gap-4">
+                                    <span
+                                        class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                                        {{ unidad.numero }}
+                                    </span>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800">{{ unidad.titulo }}</h3>
+                                        <p class="text-sm text-gray-600">{{ unidad.temas?.length || 0 }} temas</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button (click)="abrirModalUnidad(unidad); $event.stopPropagation()"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                        Editar
+                                    </button>
+                                    <button (click)="unidad.id && eliminarUnidad(unidad.id); $event.stopPropagation()"
+                                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div *ngIf="unidadExpandida === i" class="p-4 bg-gray-50">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-semibold text-gray-700">Temas de la Unidad</h4>
+                                    <button (click)="abrirModalTema(unidad)"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                                        + Agregar Tema
+                                    </button>
+                                </div>
+
+                                <div *ngIf="!unidad.temas || unidad.temas.length === 0" class="text-center py-6 text-gray-500">
+                                    No hay temas en esta unidad
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div *ngFor="let tema of unidad.temas; trackBy: trackByTema"
+                                        class="bg-white p-4 rounded-lg border border-gray-200">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-gray-800">{{ tema.titulo }}</h5>
+                                                <p class="text-sm text-gray-600 mt-1">{{ tema.descripcion }}</p>
+                                                <div class="flex gap-4 mt-2 text-sm text-gray-500">
+                                                    <span>⏱️ {{ tema.duracionEstimada }} min</span>
+                                                    <span>📄 {{ tema.contenidos?.length || 0 }} contenidos</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button (click)="abrirModalContenido(tema)"
+                                                    class="px-3 py-1 bg-orange-600 text-white rounded text-sm hover:bg-orange-700">
+                                                    + Contenido
+                                                </button>
+                                                <button (click)="abrirModalTema(unidad, tema)"
+                                                    class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                                    Editar
+                                                </button>
+                                                <button type="button"
+                                                    (click)="testClick('eliminar tema ' + tema.id); eliminarTema(unidad, tema.id)"
+                                                    class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="tema.contenidos && tema.contenidos.length > 0"
+                                            class="mt-3 pl-4 border-l-2 border-orange-200">
+                                            <div *ngFor="let contenido of tema.contenidos; let ci = index; trackBy: trackByContenido"
+                                                class="flex justify-between items-center py-2 text-sm">
+                                                <div class="flex items-center gap-2">
+                                                    <span *ngIf="contenido.tipo === 'video'">🎥</span>
+                                                    <span *ngIf="contenido.tipo === 'texto'">📝</span>
+                                                    <span *ngIf="contenido.tipo === 'imagen'">🖼️</span>
+                                                    <span *ngIf="contenido.tipo === 'documento'">📄</span>
+                                                    <span class="text-gray-700">{{ contenido.titulo }}</span>
+                                                    <span *ngIf="contenido.duracion" class="text-gray-500">({{
+                                                        contenido.duracion }} min)</span>
+                                                </div>
+                                                <button (click)="eliminarContenido(tema, ci); $event.stopPropagation()"
+                                                    class="text-red-600 hover:text-red-800">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Tareas -->
+                <div *ngIf="seccionActiva === 'tareas'" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Tareas del Curso</h2>
+                        <button (click)="abrirModalTarea()"
+                            class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition font-semibold">
+                            + Nueva Tarea
+                        </button>
+                    </div>
+
+                    <div *ngIf="!curso.tareas || curso.tareas.length === 0" class="text-center py-12 text-gray-500">
+                        <p class="text-lg">No hay tareas creadas aún</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div *ngFor="let tarea of curso.tareas; let i = index; trackBy: trackByTarea"
+                            class="bg-white border-2 border-gray-200 rounded-xl p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-gray-800">{{ tarea.titulo }}</h3>
+                                <span [class.bg-red-100]="tarea.prioridad === 'alta'"
+                                    [class.text-red-800]="tarea.prioridad === 'alta'"
+                                    [class.bg-yellow-100]="tarea.prioridad === 'media'"
+                                    [class.text-yellow-800]="tarea.prioridad === 'media'"
+                                    [class.bg-green-100]="tarea.prioridad === 'baja'"
+                                    [class.text-green-800]="tarea.prioridad === 'baja'"
+                                    class="px-3 py-1 rounded-full text-xs font-semibold">
+                                    {{ tarea.prioridad }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">{{ tarea.descripcion }}</p>
+                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                <span>📅 {{ tarea.fechaEntrega }}</span>
+                                <span>💯 {{ tarea.puntosPosibles }} pts</span>
+                            </div>
+                            <button (click)="eliminarTarea(tarea)"
+                                class="mt-4 w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Exámenes -->
+                <div *ngIf="seccionActiva === 'examenes'" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Exámenes del Curso</h2>
+                        <button (click)="abrirModalExamen()"
+                            class="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition font-semibold">
+                            + Nuevo Examen
+                        </button>
+                    </div>
+
+                    <div *ngIf="!curso.examenes || curso.examenes.length === 0" class="text-center py-12 text-gray-500">
+                        <p class="text-lg">No hay exámenes creados aún</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div *ngFor="let examen of curso.examenes; let i = index; trackBy: trackByExamen"
+                            class="bg-white border-2 border-gray-200 rounded-xl p-5">
+                            <h3 class="font-bold text-gray-800 mb-2">{{ examen.titulo }}</h3>
+                            <p class="text-sm text-gray-600 mb-4">{{ examen.descripcion }}</p>
+                            <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <p class="text-gray-600">Duración</p>
+                                    <p class="font-semibold text-blue-600">{{ examen.duracion }} min</p>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <p class="text-gray-600">Preguntas</p>
+                                    <p class="font-semibold text-green-600">{{ examen.preguntasLista.length }}</p>
+                                </div>
+                                <div class="bg-orange-50 p-3 rounded-lg">
+                                    <p class="text-gray-600">Aprobación</p>
+                                    <p class="font-semibold text-orange-600">{{ examen.porcentajeAprobacion }}%</p>
+                                </div>
+                                <div class="bg-orange-50 p-3 rounded-lg">
+                                    <p class="text-gray-600">Intentos</p>
+                                    <p class="font-semibold text-orange-600">{{ examen.intentosPermitidos || 3 }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Botón para agregar preguntas -->
+                            <button (click)="abrirModalPregunta(examen)"
+                                class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                + Agregar Preguntas ({{ examen.preguntasLista.length }})
+                            </button>
+
+                            <!-- Lista de preguntas -->
+                            <div *ngIf="examen.preguntasLista && examen.preguntasLista.length > 0"
+                                class="mb-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                                <div *ngFor="let pregunta of examen.preguntasLista; trackBy: trackByPregunta"
+                                    class="text-xs mb-2 p-2 bg-gray-50 rounded">
+                                    <p class="font-semibold text-gray-700">{{ pregunta.texto }}</p>
+                                    <p class="text-gray-500 mt-1">{{ pregunta.opciones.length }} opciones</p>
+                                    <button (click)="pregunta.id && eliminarPregunta(examen, pregunta.id)"
+                                        class="text-red-600 hover:text-red-800 text-xs mt-1">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button (click)="eliminarExamen(examen)"
+                                class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                Eliminar Examen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción finales -->
+            <div class="flex gap-4 justify-end">
+                <button (click)="reiniciarFormulario()"
+                    class="px-8 py-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                    Cancelar
+                </button>
+                <button (click)="guardarCurso()"
+                    class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition font-semibold shadow-lg">
+                    💾 Guardar Curso
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nueva/Editar Unidad -->
+<div *ngIf="modalUnidadAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Nueva Unidad</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Título de la Unidad</label>
+                <input type="text" [(ngModel)]="nuevaUnidad.titulo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                <textarea [(ngModel)]="nuevaUnidad.descripcion" rows="3"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarUnidad()"
+                class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo/Editar Tema -->
+<div *ngIf="modalTemaAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Nuevo Tema</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Título del Tema</label>
+                <input type="text" [(ngModel)]="nuevoTema.titulo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                <textarea [(ngModel)]="nuevoTema.descripcion" rows="3"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Duración Estimada (minutos)</label>
+                <input type="number" [(ngModel)]="nuevoTema.duracionEstimada"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarTema()"
+                class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Contenido -->
+<div *ngIf="modalContenidoAbierto"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Nuevo Contenido</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Contenido</label>
+                <select [(ngModel)]="nuevoContenido.tipo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="video">🎥 Video</option>
+                    <option value="texto">📝 Texto</option>
+                    <option value="imagen">🖼️ Imagen</option>
+                    <option value="documento">📄 Documento</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
+                <input type="text" [(ngModel)]="nuevoContenido.titulo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div *ngIf="nuevoContenido.tipo !== 'texto'">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">URL</label>
+                <input type="text" [(ngModel)]="nuevoContenido.url"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div *ngIf="nuevoContenido.tipo === 'texto'">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Contenido</label>
+                <textarea [(ngModel)]="nuevoContenido.contenido" rows="5"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <div *ngIf="nuevoContenido.tipo === 'video'">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Duración (minutos)</label>
+                <input type="number" [(ngModel)]="nuevoContenido.duracion"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarContenido()"
+                class="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold">
+                Agregar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nueva Tarea -->
+<div *ngIf="modalTareaAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Nueva Tarea</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
+                <input type="text" [(ngModel)]="nuevaTarea.titulo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                <textarea [(ngModel)]="nuevaTarea.descripcion" rows="3"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha de Entrega</label>
+                    <input type="date" [(ngModel)]="nuevaTarea.fechaEntrega"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Puntos Posibles</label>
+                    <input type="number" [(ngModel)]="nuevaTarea.puntosPosibles"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Prioridad</label>
+                <select [(ngModel)]="nuevaTarea.prioridad"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="alta">Alta</option>
+                    <option value="media">Media</option>
+                    <option value="baja">Baja</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarTarea()"
+                class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Examen -->
+<div *ngIf="modalExamenAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Nuevo Examen</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
+                <input type="text" [(ngModel)]="nuevoExamen.titulo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                <textarea [(ngModel)]="nuevoExamen.descripcion" rows="3"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha</label>
+                    <input type="datetime-local" [(ngModel)]="nuevoExamen.fecha"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Duración (min)</label>
+                    <input type="number" [(ngModel)]="nuevoExamen.duracion"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">% Aprobación</label>
+                    <input type="number" [(ngModel)]="nuevoExamen.porcentajeAprobacion" min="0" max="100"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                        placeholder="Ej: 70">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Intentos Permitidos</label>
+                    <input type="number" [(ngModel)]="nuevoExamen.intentosPermitidos" min="1" max="10"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                        placeholder="Ej: 3">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Examen</label>
+                    <select [(ngModel)]="nuevoExamen.tipo"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                        <option value="opcion_multiple">Opción Múltiple</option>
+                        <option value="verdadero_falso">Verdadero/Falso</option>
+                        <option value="mixto">Mixto</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarExamen()"
+                class="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nueva Pregunta -->
+<div *ngIf="modalPreguntaAbierto"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Agregar Pregunta al Examen</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Pregunta</label>
+                <select [(ngModel)]="nuevaPregunta.tipo"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="opcion_multiple">Opción Múltiple</option>
+                    <option value="verdadero_falso">Verdadero/Falso</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Pregunta</label>
+                <textarea [(ngModel)]="nuevaPregunta.texto" rows="3"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                    placeholder="Escribe la pregunta aquí..."></textarea>
+            </div>
+
+            <!-- Opciones para Verdadero/Falso -->
+            <div *ngIf="nuevaPregunta.tipo === 'verdadero_falso'">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Respuesta Correcta</label>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50"
+                        [class.border-blue-600]="nuevaPregunta.respuestaCorrecta === 0"
+                        [class.bg-blue-50]="nuevaPregunta.respuestaCorrecta === 0">
+                        <input type="radio" name="respuestaVF" [value]="0" [(ngModel)]="nuevaPregunta.respuestaCorrecta"
+                            class="mr-3">
+                        <span class="font-medium">Verdadero</span>
+                    </label>
+                    <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50"
+                        [class.border-blue-600]="nuevaPregunta.respuestaCorrecta === 1"
+                        [class.bg-blue-50]="nuevaPregunta.respuestaCorrecta === 1">
+                        <input type="radio" name="respuestaVF" [value]="1" [(ngModel)]="nuevaPregunta.respuestaCorrecta"
+                            class="mr-3">
+                        <span class="font-medium">Falso</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Opciones para Opción Múltiple -->
+            <div *ngIf="nuevaPregunta.tipo === 'opcion_multiple'">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Opciones de Respuesta</label>
+
+                <!-- Agregar nueva opción -->
+                <div class="flex gap-2 mb-4">
+                    <input type="text" [(ngModel)]="opcionTemporal" (keyup.enter)="agregarOpcion()"
+                        class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                        placeholder="Escribe una opción y presiona Enter o haz click en Agregar">
+                    <button (click)="agregarOpcion()"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                        + Agregar
+                    </button>
+                </div>
+
+                <!-- Lista de opciones -->
+                <div class="space-y-2 mb-4">
+                    <div *ngFor="let opcion of nuevaPregunta.opciones; let i = index; trackBy: trackByIndex"
+                        class="flex items-center gap-3 p-3 border-2 rounded-lg"
+                        [class.border-green-500]="nuevaPregunta.respuestaCorrecta === i"
+                        [class.bg-green-50]="nuevaPregunta.respuestaCorrecta === i">
+                        <input type="radio" name="respuestaCorrecta" [value]="i"
+                            [(ngModel)]="nuevaPregunta.respuestaCorrecta" class="flex-shrink-0">
+                        <span class="flex-1 font-medium">{{ getOptionLabel(i) }}. {{ opcion }}</span>
+                        <button (click)="eliminarOpcion(i)"
+                            class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600">
+                    <span class="font-semibold">Instrucción:</span> Selecciona el radio button de la opción correcta
+                </p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button (click)="cerrarModal()"
+                class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                Cancelar
+            </button>
+            <button (click)="guardarPregunta()"
+                [disabled]="!nuevaPregunta.texto || (nuevaPregunta.tipo === 'opcion_multiple' && (!nuevaPregunta.opciones || nuevaPregunta.opciones.length < 2))"
+                class="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Guardar Pregunta
+            </button>
+        </div>
+    </div>
+</div>

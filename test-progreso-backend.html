@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend Progreso</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            background: #f4f4f4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Endpoints de Progreso</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificar Backend</h2>
+        <button onclick="testBackendAlive()">Test Backend (GET /)</button>
+        <button onclick="testGetCursos()">Test GET /cursos</button>
+        <div id="result-alive" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Crear Progreso (POST /progreso)</h2>
+        <button onclick="crearProgreso()">Crear Progreso Nuevo</button>
+        <div id="result-create" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Obtener Progreso (GET /progreso/:alumnoId/curso/:cursoId)</h2>
+        <input type="text" id="cursoId" placeholder="ID del curso" value="01515026-f343-4321-8933-d7a53f6307e7" style="width: 400px; padding: 8px;">
+        <button onclick="obtenerProgreso()">Obtener Progreso</button>
+        <div id="result-get" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Marcar Tema Completado (PATCH /progreso/:alumnoId/curso/:cursoId/tema)</h2>
+        <button onclick="marcarTema()">Marcar Tema Como Completado</button>
+        <div id="result-tema" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Marcar Contenido Visto (PATCH /progreso/:alumnoId/curso/:cursoId/contenido)</h2>
+        <button onclick="marcarContenido()">Marcar Contenido Como Visto</button>
+        <div id="result-contenido" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Resetear Progreso (DELETE /progreso/:alumnoId/curso/:cursoId)</h2>
+        <button onclick="resetearProgreso()" style="background: #f44336;">Resetear Progreso</button>
+        <div id="result-reset" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        const ALUMNO_ID = 'alumno-demo-001';
+        let CURSO_ID = '01515026-f343-4321-8933-d7a53f6307e7';
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testBackendAlive() {
+            try {
+                const response = await fetch(`${API_URL}/`);
+                const data = await response.text();
+                showResult('result-alive', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: data
+                });
+            } catch (error) {
+                showResult('result-alive', { error: error.message }, true);
+            }
+        }
+
+        async function testGetCursos() {
+            try {
+                const response = await fetch(`${API_URL}/cursos`);
+                const data = await response.json();
+                showResult('result-alive', {
+                    status: response.status,
+                    totalCursos: data.length,
+                    primerCurso: data[0]
+                });
+            } catch (error) {
+                showResult('result-alive', { error: error.message }, true);
+            }
+        }
+
+        async function crearProgreso() {
+            CURSO_ID = document.getElementById('cursoId').value || CURSO_ID;
+            try {
+                const body = {
+                    alumnoId: ALUMNO_ID,
+                    cursoId: CURSO_ID,
+                    fechaInscripcion: new Date().toISOString(),
+                    ultimoAcceso: new Date().toISOString(),
+                    estado: 'no-iniciado',
+                    progresoGeneral: 0,
+                    temasCompletados: [],
+                    contenidosVistos: []
+                };
+                
+                const response = await fetch(`${API_URL}/progreso`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                showResult('result-create', {
+                    status: response.status,
+                    response: data
+                }, response.status >= 400);
+            } catch (error) {
+                showResult('result-create', { error: error.message }, true);
+            }
+        }
+
+        async function obtenerProgreso() {
+            CURSO_ID = document.getElementById('cursoId').value || CURSO_ID;
+            try {
+                const response = await fetch(`${API_URL}/progreso/${ALUMNO_ID}/curso/${CURSO_ID}`);
+                const data = await response.json();
+                showResult('result-get', {
+                    status: response.status,
+                    response: data
+                }, response.status >= 400);
+            } catch (error) {
+                showResult('result-get', { error: error.message }, true);
+            }
+        }
+
+        async function marcarTema() {
+            CURSO_ID = document.getElementById('cursoId').value || CURSO_ID;
+            try {
+                const body = {
+                    cursoId: CURSO_ID,
+                    unidadId: 'unidad-test-1',
+                    temaId: 'tema-test-1',
+                    completado: true
+                };
+                
+                const response = await fetch(`${API_URL}/progreso/${ALUMNO_ID}/curso/${CURSO_ID}/tema`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                showResult('result-tema', {
+                    status: response.status,
+                    response: data
+                }, response.status >= 400);
+            } catch (error) {
+                showResult('result-tema', { error: error.message }, true);
+            }
+        }
+
+        async function marcarContenido() {
+            CURSO_ID = document.getElementById('cursoId').value || CURSO_ID;
+            try {
+                const body = {
+                    cursoId: CURSO_ID,
+                    contenidoId: 'contenido-test-1',
+                    temaId: 'tema-test-1',
+                    visto: true
+                };
+                
+                const response = await fetch(`${API_URL}/progreso/${ALUMNO_ID}/curso/${CURSO_ID}/contenido`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                showResult('result-contenido', {
+                    status: response.status,
+                    response: data
+                }, response.status >= 400);
+            } catch (error) {
+                showResult('result-contenido', { error: error.message }, true);
+            }
+        }
+
+        async function resetearProgreso() {
+            CURSO_ID = document.getElementById('cursoId').value || CURSO_ID;
+            if (!confirm('¿Estás seguro de resetear el progreso?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/progreso/${ALUMNO_ID}/curso/${CURSO_ID}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.status === 204) {
+                    showResult('result-reset', {
+                        status: 204,
+                        message: 'Progreso reseteado exitosamente'
+                    });
+                } else {
+                    const data = await response.json();
+                    showResult('result-reset', {
+                        status: response.status,
+                        response: data
+                    }, response.status >= 400);
+                }
+            } catch (error) {
+                showResult('result-reset', { error: error.message }, true);
+            }
+        }
+
+        // Auto-test al cargar
+        window.onload = () => {
+            console.log('📋 Página de prueba cargada');
+            console.log('Backend URL:', API_URL);
+            console.log('Alumno ID:', ALUMNO_ID);
+        };
+    </script>
+</body>
+</html>

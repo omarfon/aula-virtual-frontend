@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-600">Cargando examen...</p>
+    </div>
+  </div>
+
+  <!-- Examen Container -->
+  <div *ngIf="!cargando && examen && intentoActual" class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">{{ examen.titulo }}</h1>
+          <p class="text-gray-600 mt-2">{{ examen.descripcion }}</p>
+          <div class="flex gap-4 mt-3 text-sm text-gray-500">
+            <span>📝 Intento #{{ intentoActual.numeroIntento }}</span>
+            <span>🎯 {{ examen.puntosTotales }} puntos totales</span>
+            <span>❓ {{ preguntas.length }} preguntas</span>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div *ngIf="tiempoRestante > 0" class="text-right">
+          <div class="text-sm text-gray-600 mb-1">Tiempo restante</div>
+          <div class="text-2xl font-bold" 
+               [class.text-red-600]="tiempoRestante <= 300"
+               [class.text-gray-800]="tiempoRestante > 300">
+            {{ formatearTiempo(tiempoRestante) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mt-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Progreso</span>
+          <span>{{ progreso }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+          <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+               [style.width.%]="progreso"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preguntas -->
+    <div class="space-y-6">
+      <div *ngFor="let pregunta of preguntas; let i = index" 
+           class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-semibold">
+            {{ i + 1 }}
+          </span>
+          <div class="flex-1">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">
+              {{ pregunta.textoPregunta }}
+            </h3>
+            <span class="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+              {{ pregunta.puntos }} punto(s)
+            </span>
+          </div>
+        </div>
+
+        <!-- Multiple Choice -->
+        <div *ngIf="pregunta.tipoPregunta === 'multiple-choice'" class="ml-11 space-y-3">
+          <label *ngFor="let opcion of pregunta.opciones" 
+                 class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+            <input type="radio" 
+                   [name]="'pregunta_' + pregunta.id"
+                   [value]="opcion"
+                   (change)="actualizarRespuesta(pregunta.id, opcion)"
+                   class="mr-3 h-4 w-4 text-blue-600">
+            <span class="text-gray-700">{{ opcion }}</span>
+          </label>
+        </div>
+
+        <!-- Verdadero/Falso -->
+        <div *ngIf="pregunta.tipoPregunta === 'verdadero-falso'" class="ml-11 space-y-3">
+          <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+            <input type="radio" 
+                   [name]="'pregunta_' + pregunta.id"
+                   value="verdadero"
+                   (change)="actualizarRespuesta(pregunta.id, 'verdadero')"
+                   class="mr-3 h-4 w-4 text-blue-600">
+            <span class="text-gray-700">✓ Verdadero</span>
+          </label>
+          <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+            <input type="radio" 
+                   [name]="'pregunta_' + pregunta.id"
+                   value="falso"
+                   (change)="actualizarRespuesta(pregunta.id, 'falso')"
+                   class="mr-3 h-4 w-4 text-blue-600">
+            <span class="text-gray-700">✗ Falso</span>
+          </label>
+        </div>
+
+        <!-- Respuesta Corta -->
+        <div *ngIf="pregunta.tipoPregunta === 'respuesta-corta'" class="ml-11">
+          <textarea 
+            [id]="'respuesta_' + pregunta.id"
+            rows="4"
+            (input)="actualizarRespuesta(pregunta.id, $any($event.target).value)"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Escribe tu respuesta aquí..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="bg-white rounded-lg shadow-md p-6 mt-6 flex justify-between items-center sticky bottom-6">
+      <button (click)="abandonarIntento()"
+              [disabled]="enviando"
+              class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition">
+        ← Abandonar intento
+      </button>
+
+      <div class="flex gap-3">
+        <div class="text-sm text-gray-600 self-center">
+          {{ progreso }}% completado
+        </div>
+        <button (click)="entregarExamen()"
+                [disabled]="enviando"
+                class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold transition flex items-center gap-2">
+          <span *ngIf="!enviando">Entregar examen</span>
+          <span *ngIf="enviando" class="flex items-center gap-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Enviando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

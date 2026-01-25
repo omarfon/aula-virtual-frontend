@@ -1,0 +1,478 @@
+<!-- Estado de carga -->
+<div *ngIf="cargando" class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <div class="text-center">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+    <p class="text-gray-600">Cargando curso...</p>
+  </div>
+</div>
+
+<!-- Estado de error -->
+<div *ngIf="error && !cargando" class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <div class="text-center max-w-md mx-auto px-4">
+    <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Error al cargar el curso</h2>
+    <p class="text-gray-600 mb-4">{{ error }}</p>
+    <button (click)="cargarCurso(curso?.id || '')" 
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      Reintentar
+    </button>
+  </div>
+</div>
+
+<div class="min-h-screen bg-gray-50" *ngIf="curso && !cargando">
+  <!-- Header del curso -->
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Botón volver -->
+      <div class="mb-3">
+        <a routerLink="/cursos" class="inline-flex items-center text-yellow-300 hover:text-yellow-100 transition font-medium">
+          <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Volver a cursos
+        </a>
+      </div>
+      
+      <!-- Contenedor principal con información y progreso -->
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <!-- Información del curso -->
+        <div class="flex-1">
+          <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ curso.titulo }}</h1>
+          <p class="text-blue-100 mb-3">{{ curso.descripcion }}</p>
+          
+          <div class="flex items-center gap-6 text-sm">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <span>{{ curso.instructor }}</span>
+            </div>
+            
+            <div class="flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span>{{ curso.unidades?.length || 0 }} unidades</span>
+            </div>
+            
+            <div class="flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <span>{{ curso.nivel }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Barra de progreso (30% del ancho, alineada a la derecha) -->
+        <div class="w-full lg:w-[30%] lg:flex-shrink-0">
+          <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-medium text-white">Progreso</span>
+              <span class="text-sm font-bold text-yellow-300">{{ porcentajeProgresoGeneral }}%</span>
+            </div>
+            <div class="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+              <div class="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out shadow-lg"
+                   [style.width.%]="porcentajeProgresoGeneral"></div>
+            </div>
+            <div class="text-xs text-blue-100 mt-1">
+              <span>{{ progresoCurso?.temasCompletados || 0 }}/{{ progresoCurso?.totalTemas || 0 }} temas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- Sidebar izquierdo: Lista de unidades con temas -->
+      <aside class="lg:w-1/3">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden sticky top-4">
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4">
+            <h2 class="text-xl font-bold">Contenido del curso</h2>
+            <p class="text-sm text-blue-100 mt-1">{{ curso.unidades?.length || 0 }} unidades</p>
+          </div>
+          
+          <div class="divide-y divide-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div *ngFor="let unidad of curso.unidades; trackBy: trackByUnidad" class="transition-all duration-300">
+              <!-- Header de la unidad (clickeable) -->
+              <div (click)="toggleUnidad(unidad.id)"
+                   class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+                
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 mr-2">
+                        Unidad {{ unidad.numero }}
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        {{ obtenerProgresoUnidad(unidad.id) }}%
+                      </span>
+                    </div>
+                    
+                    <h3 class="font-bold text-gray-900 mb-2 text-sm" 
+                        [class.text-blue-700]="isUnidadExpandida(unidad.id)">
+                      {{ unidad.titulo }}
+                    </h3>
+                    
+                    <!-- Barra de progreso de la unidad -->
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                      <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                           [style.width.%]="obtenerProgresoUnidad(unidad.id)"></div>
+                    </div>
+                    
+                    <div class="flex items-center text-xs text-gray-500">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      </svg>
+                      <span>{{ unidad.temas?.length || 0 }} temas</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center gap-1 ml-2">
+                    <svg class="w-5 h-5 text-gray-400 transition-transform duration-300" 
+                         [class.rotate-180]="isUnidadExpandida(unidad.id)"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lista de temas (expandible) -->
+              <div *ngIf="isUnidadExpandida(unidad.id)" 
+                   class="bg-gray-50 border-l-4 border-blue-500">
+                
+                <!-- Mensaje cuando no hay temas -->
+                <div *ngIf="!unidad.temas || unidad.temas.length === 0" 
+                     class="px-6 py-4 text-center text-gray-500">
+                  <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                  </svg>
+                  <p class="text-sm">Esta unidad no tiene temas configurados</p>
+                </div>
+                
+                <!-- Lista de temas -->
+                <div *ngFor="let tema of unidad.temas; trackBy: trackByTema; let i = index"
+                     (click)="seleccionarTema(unidad.id, i)"
+                     class="px-6 py-3 cursor-pointer hover:bg-blue-50 transition-colors duration-200 border-b border-gray-200 last:border-b-0"
+                     [class.bg-blue-100]="isTemaSeleccionado(unidad.id, i)"
+                     [class.border-l-2]="isTemaSeleccionado(unidad.id, i)"
+                     [class.border-blue-600]="isTemaSeleccionado(unidad.id, i)">
+                  
+                  <div class="flex items-center gap-3">
+                    <!-- Icono según tipo de contenido -->
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                         [class.bg-blue-100]="tema.contenidos?.[0]?.tipo === 'texto'"
+                         [class.bg-red-100]="tema.contenidos?.[0]?.tipo === 'video'"
+                         [class.bg-green-100]="tema.contenidos?.[0]?.tipo === 'imagen'"
+                         [class.bg-purple-100]="tema.contenidos?.[0]?.tipo === 'documento'">
+                      <!-- Icono de texto -->
+                      <svg *ngIf="tema.contenidos?.[0]?.tipo === 'texto'" class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      <!-- Icono de video -->
+                      <svg *ngIf="tema.contenidos?.[0]?.tipo === 'video'" class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <!-- Icono de imagen -->
+                      <svg *ngIf="tema.contenidos?.[0]?.tipo === 'imagen'" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-semibold text-sm text-gray-900 truncate mb-1"
+                          [class.text-blue-700]="isTemaSeleccionado(unidad.id, i)">
+                        {{ tema.titulo }}
+                      </h4>
+                      <p class="text-xs text-gray-500">
+                        <span *ngIf="tema.duracionEstimada">{{ tema.duracionEstimada }} min</span>
+                        <span *ngIf="!tema.duracionEstimada">{{ tema.contenidos?.length || 0 }} contenidos</span>
+                      </p>
+                    </div>
+                    
+                    <!-- Indicador de completado pequeño -->
+                    <span *ngIf="isTemaCompletado(unidad.id, tema.id)" 
+                          class="flex-shrink-0"
+                          title="Tema completado">
+                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                      </svg>
+                    </span>
+                    
+                    <!-- Indicador de tema seleccionado (chevron) -->
+                    <svg *ngIf="isTemaSeleccionado(unidad.id, i)" 
+                         class="w-5 h-5 text-blue-600 flex-shrink-0" 
+                         fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Contenido principal a la derecha -->
+      <main class="lg:w-2/3">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden" *ngIf="temaActual">
+          <!-- Header del tema -->
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-indigo-200">Unidad {{ temaActual.unidad.numero }}</span>
+              <div class="flex items-center gap-1 text-indigo-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-xs">{{ temaActual.tema.duracionEstimada }} min</span>
+              </div>
+            </div>
+            
+            <h2 class="text-xl font-bold mb-1">{{ temaActual.tema.titulo }}</h2>
+            <p class="text-blue-100 text-sm">{{ temaActual.tema.descripcion }}</p>
+          </div>
+
+          <!-- Contenido del tema seleccionado -->
+          <div class="px-8 py-8">
+            <!-- Mensaje cuando no hay contenidos -->
+            <div *ngIf="!temaActual.tema.contenidos || temaActual.tema.contenidos.length === 0" 
+                 class="text-center py-12">
+              <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">Este tema aún no tiene contenidos</h3>
+              <p class="text-gray-600">Los contenidos estarán disponibles próximamente.</p>
+            </div>
+            
+            <!-- Loop por cada contenido del tema -->
+            <div *ngFor="let contenido of temaActual.tema.contenidos; trackBy: trackByContenido; let isLast = last; let i = index"
+                 [class.mb-8]="!isLast"
+                 [attr.data-contenido-id]="contenido.id"
+                 [attr.data-tipo]="contenido.tipo"
+                 #contenidoElement>
+              
+              <!-- Contenido de texto -->
+              <div *ngIf="contenido.tipo === 'texto'">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900">{{ contenido.titulo }}</h3>
+                    <p class="text-sm text-gray-500">Contenido de lectura - Desplázate hasta el final para marcar como leído</p>
+                  </div>
+                </div>
+                <div class="prose prose-lg max-w-none max-h-[500px] overflow-y-auto border rounded-lg p-6 bg-gray-50"
+                     (scroll)="onTextoScroll($event, contenido.id!)"
+                     #textoContainer>
+                  <div class="text-gray-700 leading-relaxed text-lg" [innerHTML]="contenido.contenido"></div>
+                </div>
+              </div>
+
+              <!-- Contenido de video -->
+              <div *ngIf="contenido.tipo === 'video'">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900">{{ contenido.titulo }}</h3>
+                    <p class="text-sm text-gray-500">Video educativo - Reproduce el video para marcarlo como visto <span *ngIf="contenido.duracion">({{ contenido.duracion }} min)</span></p>
+                  </div>
+                </div>
+                <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg" *ngIf="contenido.url">
+                  <iframe 
+                    [src]="contenido.url | sanitizeUrl"
+                    class="absolute inset-0 w-full h-full"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    (load)="onVideoPlay(contenido.id!)">
+                  </iframe>
+                </div>
+              </div>
+
+              <!-- Contenido de imagen -->
+              <div *ngIf="contenido.tipo === 'imagen'">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900">{{ contenido.titulo }}</h3>
+                    <p class="text-sm text-gray-500">Imagen educativa</p>
+                  </div>
+                </div>
+                <img 
+                  [src]="contenido.url" 
+                  [alt]="contenido.titulo"
+                  class="w-full rounded-lg shadow-lg">
+              </div>
+
+              <!-- Contenido de documento -->
+              <div *ngIf="contenido.tipo === 'documento'">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900">{{ contenido.titulo }}</h3>
+                    <p class="text-sm text-gray-500">Documento descargable</p>
+                  </div>
+                </div>
+                <a [href]="contenido.url" 
+                   target="_blank"
+                   class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Descargar documento
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer con navegación entre temas -->
+          <div class="px-8 py-6 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+              <button 
+                *ngIf="temaActual && temaActual.index > 0"
+                (click)="seleccionarTema(temaActual.unidad.id, temaActual.index - 1)"
+                class="flex items-center px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Tema anterior
+              </button>
+              
+              <div class="flex-1"></div>
+              
+              <button 
+                *ngIf="temaActual && temaActual.index < (temaActual.unidad.temas?.length || 0) - 1"
+                (click)="irSiguienteTema()"
+                class="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                Siguiente tema
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje cuando no hay tema seleccionado -->
+        <div *ngIf="!temaActual" class="bg-white rounded-xl shadow-lg p-12 text-center">
+          <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+          <h3 class="text-xl font-bold text-gray-700 mb-2">Selecciona un tema</h3>
+          <p class="text-gray-500">Haz clic en un tema de la lista para ver su contenido</p>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- Mensaje si no hay curso -->
+<div *ngIf="!curso" class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <div class="text-center">
+    <svg class="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+    </svg>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Curso no encontrado</h2>
+    <p class="text-gray-600 mb-6">El curso que buscas no existe o no está disponible.</p>
+    <a routerLink="/cursos" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      Volver a cursos
+    </a>
+  </div>
+</div>
+
+<!-- Modal de Certificado -->
+<div *ngIf="mostrarCertificado" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+     (click)="cerrarCertificado()">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 transform transition-all"
+       (click)="$event.stopPropagation()">
+    <!-- Confetti animado -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full mb-4 animate-bounce">
+        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+        </svg>
+      </div>
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">¡Felicitaciones!</h2>
+      <p class="text-lg text-gray-600 mb-6">Has completado el curso exitosamente</p>
+    </div>
+
+    <!-- Certificado -->
+    <div class="border-4 border-blue-600 rounded-lg p-6 mb-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div class="text-center">
+        <div class="text-sm text-gray-600 uppercase tracking-wider mb-2">Certificado de Finalización</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ curso?.titulo }}</h3>
+        <p class="text-gray-700 mb-2">Otorgado a</p>
+        <p class="text-xl font-semibold text-blue-600 mb-4">Estudiante</p>
+        <p class="text-sm text-gray-600 mb-4">
+          Por completar satisfactoriamente todos los {{ progresoCurso?.totalTemas }} temas del curso
+        </p>
+        <div class="flex items-center justify-center gap-8 text-sm text-gray-600">
+          <div>
+            <p class="font-medium">Instructor</p>
+            <p>{{ curso?.instructor }}</p>
+          </div>
+          <div>
+            <p class="font-medium">Fecha</p>
+            <p>{{ progresoCurso?.ultimoAcceso | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="text-center p-3 bg-green-50 rounded-lg">
+        <p class="text-2xl font-bold text-green-600">100%</p>
+        <p class="text-xs text-gray-600">Completado</p>
+      </div>
+      <div class="text-center p-3 bg-blue-50 rounded-lg">
+        <p class="text-2xl font-bold text-blue-600">{{ progresoCurso?.totalTemas }}</p>
+        <p class="text-xs text-gray-600">Temas</p>
+      </div>
+      <div class="text-center p-3 bg-purple-50 rounded-lg">
+        <p class="text-2xl font-bold text-purple-600">{{ curso?.unidades?.length }}</p>
+        <p class="text-xs text-gray-600">Unidades</p>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex gap-3">
+      <button (click)="descargarCertificado()"
+              class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Descargar Certificado
+      </button>
+      <button (click)="cerrarCertificado()"
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,156 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex flex-col">
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="circle-glow"></div>
+    <div class="circle-glow delay"></div>
+  </div>
+
+  <header class="px-5 py-4 flex items-center text-white z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur">
+        <span class="text-2xl font-bold">AV</span>
+      </div>
+      <div>
+        <p class="uppercase text-xs tracking-[0.35em] text-white/60">Programa de entrenamiento</p>
+        <h1 class="text-xl lg:text-2xl font-bold leading-tight">Aula Virtual</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center px-4 py-6 lg:py-8 z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 lg:gap-10 max-w-5xl w-full">
+      <section class="hidden lg:flex flex-col justify-center text-white space-y-5">
+        <div>
+          <p class="uppercase text-xs tracking-[0.45em] text-white/40 mb-3">Entrenamiento Corporativo</p>
+          <h2 class="text-3xl font-extrabold leading-tight">Potencia tu aprendizaje con nuestro ecosistema digital</h2>
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed">
+          Accede a rutas personalizadas, evalúa tu progreso al instante y consolida tus certificaciones en un mismo lugar.
+        </p>
+        <div class="grid grid-cols-1 gap-3">
+          <div class="bg-white/10 border border-white/10 rounded-2xl p-4">
+            <p class="text-sm font-semibold mb-1">Panel de progreso</p>
+            <p class="text-xs text-white/60 leading-relaxed">Visualiza indicadores clave y enfoca tus esfuerzos.</p>
+          </div>
+          <div class="bg-white/10 border border-white/10 rounded-2xl p-4">
+            <p class="text-sm font-semibold mb-1">Evaluaciones dinámicas</p>
+            <p class="text-xs text-white/60 leading-relaxed">Simulaciones y retroalimentación inmediata por módulo.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="relative">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-sm font-semibold text-blue-600 uppercase tracking-wide">Portal Entrenamiento</p>
+              <h3 class="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+                {{ modoRecuperacion ? 'Recupera tu cuenta' : 'Inicia sesión' }}
+              </h3>
+            </div>
+            <span class="px-4 py-2 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Acceso seguro</span>
+          </div>
+
+          <form *ngIf="!modoRecuperacion" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-600" for="email">Correo corporativo</label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="nombre@empresa.com"
+                class="input-field"
+                [class.input-error]="emailControl.invalid && (emailControl.dirty || emailControl.touched)"
+              />
+              <p *ngIf="emailControl.errors?.['required'] && (emailControl.dirty || emailControl.touched)" class="error-text">El correo es obligatorio.</p>
+              <p *ngIf="emailControl.errors?.['email'] && (emailControl.dirty || emailControl.touched)" class="error-text">Ingresa un correo válido.</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-600" for="password">Contraseña</label>
+              <input
+                id="password"
+                type="password"
+                formControlName="password"
+                placeholder="Ingresa tu contraseña"
+                class="input-field"
+                [class.input-error]="passwordControl.invalid && (passwordControl.dirty || passwordControl.touched)"
+              />
+              <p *ngIf="passwordControl.errors?.['required'] && (passwordControl.dirty || passwordControl.touched)" class="error-text">La contraseña es obligatoria.</p>
+              <p *ngIf="passwordControl.errors?.['minlength'] && (passwordControl.dirty || passwordControl.touched)" class="error-text">Debe contener al menos 6 caracteres.</p>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+              <label class="flex items-center gap-2 text-slate-500">
+                <input type="checkbox" formControlName="recordar" class="accent-blue-600" />
+                Recordarme en este equipo
+              </label>
+              <button type="button" (click)="toggleRecuperacion()" class="text-blue-600 hover:text-blue-700 font-semibold">¿Olvidaste tu contraseña?</button>
+            </div>
+
+            <button type="submit" [disabled]="isSubmitting" class="primary-button w-full">
+              <span *ngIf="!isSubmitting">Ingresar al entrenamiento</span>
+              <span *ngIf="isSubmitting" class="flex items-center justify-center gap-2">
+                <span class="loader"></span>
+                Procesando...
+              </span>
+            </button>
+
+            <div class="pt-3 border-t border-slate-100 text-sm text-slate-500 space-y-2">
+              <p class="font-semibold text-slate-600">Beneficios del portal:</p>
+              <ul class="space-y-1">
+                <li class="flex items-center gap-2 text-xs">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Rutas de aprendizaje personalizadas por rol.
+                </li>
+                <li class="flex items-center gap-2 text-xs">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Historial centralizado de evaluaciones y certificados.
+                </li>
+                <li class="flex items-center gap-2 text-xs">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Integración directa con el panel general del Aula Virtual.
+                </li>
+              </ul>
+            </div>
+          </form>
+
+          <form *ngIf="modoRecuperacion" [formGroup]="recoverForm" (ngSubmit)="onRecover()" class="space-y-5">
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-600" for="recover-email">Correo registrado</label>
+              <input
+                id="recover-email"
+                type="email"
+                formControlName="email"
+                placeholder="nombre@empresa.com"
+                class="input-field"
+                [class.input-error]="recoverEmailControl.invalid && (recoverEmailControl.dirty || recoverEmailControl.touched)"
+              />
+              <p *ngIf="recoverEmailControl.errors?.['required'] && (recoverEmailControl.dirty || recoverEmailControl.touched)" class="error-text">El correo es obligatorio.</p>
+              <p *ngIf="recoverEmailControl.errors?.['email'] && (recoverEmailControl.dirty || recoverEmailControl.touched)" class="error-text">Ingresa un correo válido.</p>
+            </div>
+
+            <p class="text-sm text-slate-500 bg-blue-50 border border-blue-100 rounded-2xl p-3">
+              Ingresa el correo asociado a tu cuenta. Te enviaremos un enlace temporal para restablecer la contraseña y reactivar tu acceso.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button type="button" (click)="toggleRecuperacion()" class="secondary-button w-full sm:w-auto">Regresar al login</button>
+              <button type="submit" [disabled]="isSubmitting" class="primary-button w-full sm:w-auto">
+                <span *ngIf="!isSubmitting">Enviar instrucciones</span>
+                <span *ngIf="isSubmitting" class="flex items-center justify-center gap-2">
+                  <span class="loader"></span>
+                  Enviando...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="px-4 py-4 text-white/60 text-xs lg:text-sm text-center z-10">
+    © {{ currentYear }} Aula Virtual – Programa de Entrenamiento Corporativo
+  </footer>
+</div>

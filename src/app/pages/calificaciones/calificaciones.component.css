@@ -1,0 +1,61 @@
+/* Estilos para el componente de calificaciones */
+
+/* Animación de brillo para insignias obtenidas */
+@keyframes shine {
+  0% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.bg-gradient-to-br {
+  background: linear-gradient(to bottom right, var(--tw-gradient-stops)) !important;
+}
+
+/* Efecto hover en cards de insignias */
+.shadow-lg:hover {
+  transform: translateY(-4px);
+}
+
+/* Transiciones suaves */
+* {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Estilo para tablas responsive */
+@media (max-width: 768px) {
+  table {
+    font-size: 0.875rem;
+  }
+  
+  th, td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Efecto para insignias bloqueadas - menos transparencia */
+.opacity-60 {
+  filter: grayscale(40%);
+  opacity: 0.75;
+}
+
+.opacity-60:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+}
+
+/* Asegurar que los fondos sean completamente opacos */
+.bg-white {
+  background-color: rgb(255, 255, 255) !important;
+}
+
+.bg-gray-50 {
+  background-color: rgb(249, 250, 251) !important;
+}

@@ -1,0 +1,303 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+  <!-- Vista principal de exámenes -->
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Exámenes</h1>
+      <p class="text-gray-600">Gestiona tus evaluaciones y consulta tus calificaciones</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+      <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total</p>
+            <p class="text-3xl font-bold text-gray-900">{{ estadisticas.total }}</p>
+          </div>
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Pendientes</p>
+            <p class="text-3xl font-bold text-yellow-600">{{ estadisticas.pendientes }}</p>
+          </div>
+          <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Completados</p>
+            <p class="text-3xl font-bold text-green-600">{{ estadisticas.completados }}</p>
+          </div>
+          <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Vencidos</p>
+            <p class="text-3xl font-bold text-red-600">{{ estadisticas.vencidos }}</p>
+          </div>
+          <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Promedio</p>
+            <p class="text-3xl font-bold text-blue-600">{{ estadisticas.promedioCalificaciones }}</p>
+          </div>
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl p-4 shadow-lg mb-8">
+      <div class="flex flex-wrap gap-2">
+        <button 
+          (click)="filtrar('todos')"
+          [class.bg-blue-600]="filtroActivo === 'todos'"
+          [class.text-white]="filtroActivo === 'todos'"
+          [class.bg-gray-100]="filtroActivo !== 'todos'"
+          [class.text-gray-700]="filtroActivo !== 'todos'"
+          class="px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md">
+          Todos
+        </button>
+        <button 
+          (click)="filtrar('pendiente')"
+          [class.bg-blue-600]="filtroActivo === 'pendiente'"
+          [class.text-white]="filtroActivo === 'pendiente'"
+          [class.bg-gray-100]="filtroActivo !== 'pendiente'"
+          [class.text-gray-700]="filtroActivo !== 'pendiente'"
+          class="px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md">
+          Pendientes
+        </button>
+        <button 
+          (click)="filtrar('completado')"
+          [class.bg-blue-600]="filtroActivo === 'completado'"
+          [class.text-white]="filtroActivo === 'completado'"
+          [class.bg-gray-100]="filtroActivo !== 'completado'"
+          [class.text-gray-700]="filtroActivo !== 'completado'"
+          class="px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md">
+          Completados
+        </button>
+        <button 
+          (click)="filtrar('vencido')"
+          [class.bg-blue-600]="filtroActivo === 'vencido'"
+          [class.text-white]="filtroActivo === 'vencido'"
+          [class.bg-gray-100]="filtroActivo !== 'vencido'"
+          [class.text-gray-700]="filtroActivo !== 'vencido'"
+          class="px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md">
+          Vencidos
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de Exámenes -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div *ngFor="let examen of examenesFiltrados" 
+           class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+        <div class="p-6">
+          <!-- Header -->
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 mb-2">{{ examen.examen?.titulo }}</h3>
+              <p class="text-sm text-blue-600 font-semibold">{{ examen.cursoTitulo }}</p>
+            </div>
+            <span [ngClass]="getEstadoColor(examen.estado)" class="px-3 py-1 rounded-full text-xs font-bold">
+              {{ getEstadoTexto(examen.estado) }}
+            </span>
+          </div>
+
+          <!-- Información del examen -->
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="flex items-center gap-2 text-gray-600">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span class="text-sm">{{ examen.fechaLimite | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span class="text-sm">{{ examen.examen?.tiempoLimite || 60 }} min</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              <span class="text-sm">{{ examen.examen?.preguntas?.length || 0 }} preguntas</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span class="text-sm">{{ examen.intentosRealizados }}/{{ examen.intentosPermitidos }} intentos</span>
+            </div>
+          </div>
+
+          <!-- Calificación o días restantes -->
+          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div *ngIf="examen.calificacion !== undefined" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Calificación obtenida:</span>
+              <span [ngClass]="getColorCalificacion(examen.calificacion)" class="text-2xl font-bold">
+                {{ examen.calificacion }}%
+              </span>
+            </div>
+            <div *ngIf="examen.estado === 'pendiente' && examen.calificacion === undefined" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Tiempo restante:</span>
+              <span [class.text-red-600]="getDiasRestantes(examen.fechaLimite) <= 2" 
+                    [class.text-yellow-600]="getDiasRestantes(examen.fechaLimite) > 2 && getDiasRestantes(examen.fechaLimite) <= 5"
+                    [class.text-green-600]="getDiasRestantes(examen.fechaLimite) > 5"
+                    class="text-sm font-bold">
+                {{ getDiasRestantes(examen.fechaLimite) }} días
+              </span>
+            </div>
+            <div *ngIf="examen.estado === 'vencido' && examen.calificacion === undefined" class="text-center">
+              <span class="text-sm text-red-600 font-semibold">Examen vencido - No presentado</span>
+            </div>
+          </div>
+
+          <!-- Detalles adicionales -->
+          <div class="flex items-center justify-between mb-4 text-xs text-gray-500">
+            <span>Curso: {{ examen.cursoTitulo }}</span>
+            <span>Aprobación: {{ examen.examen?.porcentajeAprobacion || 70 }}%</span>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex gap-2">
+            <!-- Botón Iniciar/Reintentar -->
+            <button 
+              (click)="iniciarExamen(examen)"
+              [disabled]="!puedeIniciar(examen)"
+              [class.opacity-50]="!puedeIniciar(examen)"
+              [class.cursor-not-allowed]="!puedeIniciar(examen)"
+              class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+              <span>{{ getTextoBoton(examen) }}</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+              </svg>
+            </button>
+            
+            <!-- Botón Ver Historial -->
+            <button 
+              *ngIf="examen.intentosRealizados > 0"
+              (click)="verHistorial(examen)"
+              class="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              <span class="hidden sm:inline">Historial</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación -->
+  <div *ngIf="modalAbierto" class="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4" (click)="cerrarModal()">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8" (click)="$event.stopPropagation()">
+      <button (click)="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <div *ngIf="examenSeleccionado" class="text-center">
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ examenSeleccionado.examen?.titulo }}</h2>
+        <p class="text-blue-600 font-semibold mb-6">{{ examenSeleccionado.cursoTitulo }}</p>
+
+        <div class="bg-gray-50 rounded-xl p-6 mb-6 text-left">
+          <h3 class="font-bold text-gray-900 mb-4">Detalles del examen:</h3>
+          <ul class="space-y-3">
+            <li class="flex justify-between">
+              <span class="text-gray-600">Duración:</span>
+              <span class="font-semibold">{{ examenSeleccionado.examen?.tiempoLimite || 60 }} minutos</span>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">Preguntas:</span>
+              <span class="font-semibold">{{ examenSeleccionado.examen?.preguntas?.length || 0 }}</span>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">Puntos totales:</span>
+              <span class="font-semibold">{{ examenSeleccionado.examen?.puntosTotales || 100 }}</span>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">Porcentaje de aprobación:</span>
+              <span class="font-semibold">{{ examenSeleccionado.examen?.porcentajeAprobacion || 70 }}%</span>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">Intentos disponibles:</span>
+              <span class="font-semibold">
+                {{ (examenSeleccionado.intentosPermitidos || 1) - examenSeleccionado.intentosRealizados }} 
+                de {{ examenSeleccionado.intentosPermitidos || 1 }}
+              </span>
+            </li>
+            <li *ngIf="examenSeleccionado.calificacion !== null && examenSeleccionado.calificacion !== undefined" class="flex justify-between">
+              <span class="text-gray-600">Mejor calificación:</span>
+              <span class="font-semibold" [ngClass]="getColorCalificacion(examenSeleccionado.calificacion)">
+                {{ examenSeleccionado.calificacion }} / {{ examenSeleccionado.examen?.puntosTotales || 100 }}
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <p class="text-sm text-yellow-800">
+            <strong>Importante:</strong> Una vez iniciado el examen, el cronómetro comenzará a contar. Asegúrate de tener una conexión estable a internet.
+          </p>
+        </div>
+
+        <div class="flex gap-3">
+          <button (click)="cerrarModal()" class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold">
+            Cancelar
+          </button>
+          <button (click)="iniciarExamen(examenSeleccionado)" 
+                  [disabled]="!puedeIniciar(examenSeleccionado)"
+                  class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ getTextoBoton(examenSeleccionado) }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

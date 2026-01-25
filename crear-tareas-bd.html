@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Tareas en BD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px;
+        }
+        .log-success {
+            color: #16a34a;
+        }
+        .log-error {
+            color: #dc2626;
+        }
+        .log-info {
+            color: #2563eb;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Crear Tareas en Base de Datos</h1>
+        <p>Este script creará las tareas de ejemplo para cada curso en la base de datos.</p>
+        
+        <button id="btnCrearTareas" onclick="crearTodasLasTareas()">
+            Crear Tareas en BD
+        </button>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTareas">0</div>
+                <div class="stat-label">Total a crear</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tareasCreadas">0</div>
+                <div class="stat-label">Creadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tareasError">0</div>
+                <div class="stat-label">Errores</div>
+            </div>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/cursos';
+        
+        // Mapeo de nombres de cursos mockup a títulos reales de la BD
+        const mapaCursos = {
+            'Seguridad de la Información': 'Seguridad de la Información',
+            'Atención al Cliente': 'Atención al Cliente de Excelencia',
+            'Cajero Exitoso': 'Cajero Bancario Profesional'
+        };
+
+        const tareasMockup = [
+            {
+                titulo: 'Análisis de Vulnerabilidades',
+                descripcion: 'Realizar un análisis de vulnerabilidades en un sistema simulado. Identificar al menos 5 vulnerabilidades críticas y proponer soluciones de mitigación.',
+                curso: 'Seguridad de la Información',
+                fechaEntrega: '2026-01-15',
+                fechaAsignacion: '2026-01-01',
+                estado: 'pendiente',
+                puntosPosibles: 100,
+                prioridad: 'alta'
+            },
+            {
+                titulo: 'Plan de Respuesta a Incidentes',
+                descripcion: 'Elaborar un plan detallado de respuesta a incidentes de ciberseguridad para una empresa bancaria. Debe incluir fases, responsables y procedimientos.',
+                curso: 'Seguridad de la Información',
+                fechaEntrega: '2026-01-18',
+                fechaAsignacion: '2026-01-05',
+                estado: 'pendiente',
+                puntosPosibles: 120,
+                prioridad: 'alta'
+            },
+            {
+                titulo: 'Caso Práctico: Cliente Insatisfecho',
+                descripcion: 'Analizar un caso de cliente insatisfecho y desarrollar una estrategia de solución aplicando técnicas de comunicación efectiva y empatía.',
+                curso: 'Atención al Cliente',
+                fechaEntrega: '2026-01-12',
+                fechaAsignacion: '2025-12-28',
+                estado: 'pendiente',
+                puntosPosibles: 80,
+                prioridad: 'media'
+            },
+            {
+                titulo: 'Política de Contraseñas Seguras',
+                descripcion: 'Diseñar una política de contraseñas seguras para una organización, incluyendo requisitos técnicos y procedimientos de gestión.',
+                curso: 'Seguridad de la Información',
+                fechaEntrega: '2026-01-08',
+                fechaAsignacion: '2025-12-20',
+                estado: 'vencida',
+                puntosPosibles: 90,
+                prioridad: 'alta'
+            },
+            {
+                titulo: 'Simulación de Atención Telefónica',
+                descripcion: 'Grabar y analizar una simulación de atención telefónica aplicando las técnicas de escucha activa y manejo de objeciones.',
+                curso: 'Atención al Cliente',
+                fechaEntrega: '2026-01-05',
+                fechaAsignacion: '2025-12-15',
+                estado: 'completada',
+                puntosPosibles: 100,
+                prioridad: 'baja'
+            },
+            {
+                titulo: 'Procedimientos de Arqueo de Caja',
+                descripcion: 'Documentar paso a paso los procedimientos de arqueo de caja, incluyendo formatos y medidas de control.',
+                curso: 'Cajero Exitoso',
+                fechaEntrega: '2026-01-14',
+                fechaAsignacion: '2025-12-30',
+                estado: 'en-progreso',
+                puntosPosibles: 85,
+                prioridad: 'media'
+            },
+            {
+                titulo: 'Detección de Billetes Falsos',
+                descripcion: 'Investigar y documentar las técnicas de detección de billetes falsos, incluyendo características de seguridad del dinero peruano.',
+                curso: 'Cajero Exitoso',
+                fechaEntrega: '2026-01-03',
+                fechaAsignacion: '2025-12-20',
+                estado: 'completada',
+                puntosPosibles: 100,
+                prioridad: 'media'
+            },
+            {
+                titulo: 'Manual de Fidelización de Clientes',
+                descripcion: 'Crear un manual de estrategias de fidelización de clientes para una empresa de servicios bancarios.',
+                curso: 'Atención al Cliente',
+                fechaEntrega: '2025-12-30',
+                fechaAsignacion: '2025-12-10',
+                estado: 'completada',
+                puntosPosibles: 90,
+                prioridad: 'baja'
+            },
+            {
+                titulo: 'Protocolos de Seguridad en Ventanilla',
+                descripcion: 'Elaborar un documento con los protocolos de seguridad que debe seguir un cajero de ventanilla, incluyendo situaciones de riesgo.',
+                curso: 'Cajero Exitoso',
+                fechaEntrega: '2026-01-20',
+                fechaAsignacion: '2026-01-06',
+                estado: 'pendiente',
+                puntosPosibles: 95,
+                prioridad: 'alta'
+            },
+            {
+                titulo: 'Encriptación de Datos Sensibles',
+                descripcion: 'Investigar y comparar al menos 3 métodos de encriptación para proteger datos sensibles en sistemas bancarios.',
+                curso: 'Seguridad de la Información',
+                fechaEntrega: '2025-12-28',
+                fechaAsignacion: '2025-12-01',
+                estado: 'completada',
+                puntosPosibles: 100,
+                prioridad: 'media'
+            }
+        ];
+
+        document.getElementById('totalTareas').textContent = tareasMockup.length;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function obtenerCursos() {
+            log('Obteniendo cursos de la BD...', 'info');
+            const response = await fetch(API_URL);
+            const cursos = await response.json();
+            log(`✓ ${cursos.length} cursos encontrados`, 'success');
+            return cursos;
+        }
+
+        async function crearTarea(cursoId, tareaData) {
+            const url = `${API_URL}/${cursoId}/tareas`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(tareaData)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+
+        async function crearTodasLasTareas() {
+            const btn = document.getElementById('btnCrearTareas');
+            btn.disabled = true;
+            btn.textContent = 'Creando tareas...';
+            
+            let creadas = 0;
+            let errores = 0;
+
+            try {
+                // Obtener todos los cursos
+                const cursos = await obtenerCursos();
+                
+                // Crear un mapa de curso por título
+                const cursosMap = {};
+                cursos.forEach(curso => {
+                    cursosMap[curso.titulo] = curso;
+                });
+
+                log('Iniciando creación de tareas...', 'info');
+
+                // Crear cada tarea
+                for (const tareaMockup of tareasMockup) {
+                    const tituloReal = mapaCursos[tareaMockup.curso];
+                    const curso = cursosMap[tituloReal];
+
+                    if (!curso) {
+                        log(`✗ Curso no encontrado: ${tareaMockup.curso} (${tituloReal})`, 'error');
+                        errores++;
+                        continue;
+                    }
+
+                    try {
+                        const tareaData = {
+                            titulo: tareaMockup.titulo,
+                            descripcion: tareaMockup.descripcion,
+                            fechaEntrega: tareaMockup.fechaEntrega,
+                            fechaAsignacion: tareaMockup.fechaAsignacion,
+                            puntosPosibles: tareaMockup.puntosPosibles,
+                            prioridad: tareaMockup.prioridad,
+                            estado: tareaMockup.estado
+                        };
+
+                        const tareaCreada = await crearTarea(curso.id, tareaData);
+                        log(`✓ Tarea creada: "${tareaMockup.titulo}" en ${curso.titulo}`, 'success');
+                        creadas++;
+                        document.getElementById('tareasCreadas').textContent = creadas;
+                    } catch (error) {
+                        log(`✗ Error al crear "${tareaMockup.titulo}": ${error.message}`, 'error');
+                        errores++;
+                        document.getElementById('tareasError').textContent = errores;
+                    }
+                }
+
+                log('', 'info');
+                log(`=== RESUMEN ===`, 'info');
+                log(`Total: ${tareasMockup.length} tareas`, 'info');
+                log(`Creadas: ${creadas} tareas`, 'success');
+                log(`Errores: ${errores} tareas`, errores > 0 ? 'error' : 'info');
+                log('', 'info');
+                log('✓ Proceso completado', 'success');
+
+            } catch (error) {
+                log(`✗ Error fatal: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Volver a ejecutar';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+/* Estilos personalizados para el componente de asignación de cursos */
+
+/* Animación para las tarjetas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-white {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Mejorar selección de cursos */
+input[type="checkbox"]:checked {
+  accent-color: #ea580c;
+}
+
+/* Hover suave en tarjetas */
+.cursor-pointer:hover {
+  transform: translateY(-2px);
+}

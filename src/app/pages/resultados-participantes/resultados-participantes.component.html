@@ -1,0 +1,435 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 sm:p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Resultados de Participantes</h1>
+      <p class="text-sm sm:text-base text-gray-600">Evaluación de aptitud laboral basada en rendimiento académico</p>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-blue-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-xs sm:text-sm font-semibold mb-1">Total Participantes</p>
+            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">{{ estadisticas.total }}</p>
+          </div>
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <span class="text-2xl">👥</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-green-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-xs sm:text-sm font-semibold mb-1">Aptos</p>
+            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">{{ estadisticas.aptos }}</p>
+          </div>
+          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <span class="text-2xl">✓</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">{{ (estadisticas.aptos / estadisticas.total * 100).toFixed(0) }}% del total</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-semibold mb-1">No Aptos</p>
+            <p class="text-3xl font-bold text-red-600">{{ estadisticas.noAptos }}</p>
+          </div>
+          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <span class="text-2xl">✗</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">{{ (estadisticas.noAptos / estadisticas.total * 100).toFixed(0) }}% del total</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-semibold mb-1">Promedio General</p>
+            <p class="text-3xl font-bold text-orange-600">{{ estadisticas.promedioGeneral }}</p>
+          </div>
+          <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+            <span class="text-2xl">📊</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">De todos los participantes</p>
+      </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Búsqueda -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Buscar</label>
+          <input type="text" [(ngModel)]="busqueda"
+                 class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                 placeholder="Nombre, DNI o email...">
+        </div>
+
+        <!-- Filtro Estado -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+          <select [(ngModel)]="filtroEstado"
+                  class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            <option value="todos">Todos</option>
+            <option value="completado">Completado</option>
+            <option value="en_curso">En Curso</option>
+            <option value="abandonado">Abandonado</option>
+          </select>
+        </div>
+
+        <!-- Filtro Aptitud -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Aptitud</label>
+          <select [(ngModel)]="filtroAptitud"
+                  class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            <option value="todos">Todos</option>
+            <option value="apto">Apto</option>
+            <option value="no_apto">No Apto</option>
+            <option value="en_evaluacion">En Evaluación</option>
+          </select>
+        </div>
+
+        <!-- Filtro Ciudad -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Ciudad</label>
+          <select [(ngModel)]="filtroCiudad"
+                  class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+            <option value="todas">Todas</option>
+            <option *ngFor="let ciudad of ciudadesUnicas" [value]="ciudad">{{ ciudad }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-4">
+        <button (click)="abrirCriterios()"
+                class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold">
+          ⚙️ Criterios de Aptitud
+        </button>
+        <button (click)="exportarReporte()"
+                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+          📥 Exportar Reporte
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de Participantes -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+            <tr>
+              <th class="px-6 py-4 text-left text-sm font-semibold">Participante</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold">DNI</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold">Ciudad</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Cursos</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Promedio</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Asistencia</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Estado</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Aptitud</th>
+              <th class="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr *ngFor="let participante of participantesFiltrados"
+                class="hover:bg-blue-50 transition-colors">
+              <td class="px-6 py-4">
+                <div>
+                  <p class="font-semibold text-gray-800">{{ participante.nombre }}</p>
+                  <p class="text-sm text-gray-500">{{ participante.email }}</p>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-gray-700">{{ participante.dni }}</td>
+              <td class="px-6 py-4 text-gray-700">{{ participante.ciudad }}</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                  {{ participante.cursosCompletados.length }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="font-bold"
+                      [class.text-green-600]="participante.promedioGeneral >= 85"
+                      [class.text-blue-600]="participante.promedioGeneral >= 75 && participante.promedioGeneral < 85"
+                      [class.text-yellow-600]="participante.promedioGeneral >= 60 && participante.promedioGeneral < 75"
+                      [class.text-red-600]="participante.promedioGeneral < 60">
+                  {{ participante.promedioGeneral }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="font-semibold"
+                      [class.text-green-600]="participante.asistenciaPromedio >= 90"
+                      [class.text-yellow-600]="participante.asistenciaPromedio >= 80 && participante.asistenciaPromedio < 90"
+                      [class.text-red-600]="participante.asistenciaPromedio < 80">
+                  {{ participante.asistenciaPromedio }}%
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span [class]="getColorEstado(participante.estado)"
+                      class="inline-block px-3 py-1 rounded-full text-xs font-bold">
+                  {{ getTextoEstado(participante.estado) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span [class]="getColorAptitud(participante.aptitud)"
+                      class="inline-block px-4 py-2 rounded-full text-sm font-bold">
+                  {{ getTextoAptitud(participante.aptitud) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <button (click)="abrirDetalle(participante)"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-semibold">
+                  Ver Detalle
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="participantesFiltrados.length === 0" class="text-center py-12 text-gray-500">
+          <p class="text-lg font-semibold">No se encontraron participantes</p>
+          <p class="text-sm">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div *ngIf="totalPaginas > 1" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            Mostrando <span class="font-semibold">{{ (paginaActual - 1) * elementosPorPagina + 1 }}</span>
+            a <span class="font-semibold">{{ Math.min(paginaActual * elementosPorPagina, totalParticipantesFiltrados) }}</span>
+            de <span class="font-semibold">{{ totalParticipantesFiltrados }}</span> resultados
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Botón Anterior -->
+            <button (click)="paginaAnterior()"
+                    [disabled]="paginaActual === 1"
+                    [class.opacity-50]="paginaActual === 1"
+                    [class.cursor-not-allowed]="paginaActual === 1"
+                    class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold text-gray-700">
+              ← Anterior
+            </button>
+
+            <!-- Números de página -->
+            <div class="flex gap-1">
+              <button *ngFor="let pagina of paginasArray"
+                      (click)="cambiarPagina(pagina)"
+                      [class.bg-blue-600]="paginaActual === pagina"
+                      [class.text-white]="paginaActual === pagina"
+                      [class.bg-white]="paginaActual !== pagina"
+                      [class.text-gray-700]="paginaActual !== pagina"
+                      class="w-10 h-10 border-2 border-gray-300 rounded-lg hover:bg-blue-100 transition font-semibold">
+                {{ pagina }}
+              </button>
+            </div>
+
+            <!-- Botón Siguiente -->
+            <button (click)="paginaSiguiente()"
+                    [disabled]="paginaActual === totalPaginas"
+                    [class.opacity-50]="paginaActual === totalPaginas"
+                    [class.cursor-not-allowed]="paginaActual === totalPaginas"
+                    class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold text-gray-700">
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalle del Participante -->
+<div *ngIf="modalDetalleAbierto && participanteSeleccionado" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h3 class="text-3xl font-bold text-gray-800">{{ participanteSeleccionado.nombre }}</h3>
+        <p class="text-gray-600">{{ participanteSeleccionado.email }}</p>
+      </div>
+      <span [class]="getColorAptitud(participanteSeleccionado.aptitud)"
+            class="px-6 py-3 rounded-full text-lg font-bold">
+        {{ getTextoAptitud(participanteSeleccionado.aptitud) }}
+      </span>
+    </div>
+
+    <!-- Información Personal -->
+    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+      <h4 class="font-bold text-lg text-gray-800 mb-4">Información Personal</h4>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <p class="text-sm text-gray-600">DNI</p>
+          <p class="font-semibold text-gray-800">{{ participanteSeleccionado.dni }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Teléfono</p>
+          <p class="font-semibold text-gray-800">{{ participanteSeleccionado.telefono }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Ciudad</p>
+          <p class="font-semibold text-gray-800">{{ participanteSeleccionado.ciudad }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Fecha de Inicio</p>
+          <p class="font-semibold text-gray-800">{{ participanteSeleccionado.fechaInicio | date:'dd/MM/yyyy' }}</p>
+        </div>
+        <div *ngIf="participanteSeleccionado.fechaFinalizacion">
+          <p class="text-sm text-gray-600">Fecha de Finalización</p>
+          <p class="font-semibold text-gray-800">{{ participanteSeleccionado.fechaFinalizacion | date:'dd/MM/yyyy' }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Estado</p>
+          <span [class]="getColorEstado(participanteSeleccionado.estado)"
+                class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-1">
+            {{ getTextoEstado(participanteSeleccionado.estado) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métricas de Rendimiento -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-blue-50 rounded-lg p-4 text-center border-2 border-blue-200">
+        <p class="text-sm text-gray-600 mb-1">Promedio General</p>
+        <p class="text-3xl font-bold text-blue-600">{{ participanteSeleccionado.promedioGeneral }}</p>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4 text-center border-2 border-green-200">
+        <p class="text-sm text-gray-600 mb-1">Asistencia</p>
+        <p class="text-3xl font-bold text-green-600">{{ participanteSeleccionado.asistenciaPromedio }}%</p>
+      </div>
+      <div class="bg-orange-50 rounded-lg p-4 text-center border-2 border-orange-200">
+        <p class="text-sm text-gray-600 mb-1">Tareas</p>
+        <p class="text-3xl font-bold text-orange-600">{{ participanteSeleccionado.tareasEntregadas }}/{{ participanteSeleccionado.totalTareas }}</p>
+        <p class="text-xs text-gray-500">{{ calcularPorcentajeTareas(participanteSeleccionado) }}%</p>
+      </div>
+      <div class="bg-orange-50 rounded-lg p-4 text-center border-2 border-orange-200">
+        <p class="text-sm text-gray-600 mb-1">Exámenes</p>
+        <p class="text-3xl font-bold text-orange-600">{{ participanteSeleccionado.examenesAprobados }}/{{ participanteSeleccionado.totalExamenes }}</p>
+        <p class="text-xs text-gray-500">{{ calcularPorcentajeExamenes(participanteSeleccionado) }}%</p>
+      </div>
+    </div>
+
+    <!-- Cursos Completados -->
+    <div class="mb-6">
+      <h4 class="font-bold text-lg text-gray-800 mb-4">Cursos Completados</h4>
+      <div class="space-y-3">
+        <div *ngFor="let curso of participanteSeleccionado.cursosCompletados"
+             class="bg-white border-2 border-gray-200 rounded-lg p-4 flex justify-between items-center">
+          <div>
+            <p class="font-semibold text-gray-800">{{ curso.nombre }}</p>
+            <p class="text-sm text-gray-600">Finalizado: {{ curso.fechaFinalizacion | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div class="flex gap-4">
+            <div class="text-center">
+              <p class="text-xs text-gray-600">Calificación</p>
+              <p class="text-2xl font-bold"
+                 [class.text-green-600]="curso.calificacion >= 85"
+                 [class.text-blue-600]="curso.calificacion >= 75 && curso.calificacion < 85"
+                 [class.text-yellow-600]="curso.calificacion >= 60 && curso.calificacion < 75"
+                 [class.text-red-600]="curso.calificacion < 60">
+                {{ curso.calificacion }}
+              </p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs text-gray-600">Asistencia</p>
+              <p class="text-2xl font-bold text-green-600">{{ curso.asistencia }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div *ngIf="participanteSeleccionado.observaciones" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg mb-6">
+      <p class="font-semibold text-gray-800 mb-1">Observaciones</p>
+      <p class="text-gray-700">{{ participanteSeleccionado.observaciones }}</p>
+    </div>
+
+    <div class="flex gap-4">
+      <button (click)="cerrarModal()"
+              class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Criterios de Aptitud -->
+<div *ngIf="modalCriteriosAbierto" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl max-w-2xl w-full p-8">
+    <h3 class="text-2xl font-bold text-gray-800 mb-6">Criterios de Aptitud Laboral</h3>
+    
+    <div class="space-y-4 mb-6">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Promedio Mínimo ({{ criterios.promedioMinimo }})
+        </label>
+        <input type="range" [(ngModel)]="criterios.promedioMinimo" min="0" max="100"
+               class="w-full">
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>0</span>
+          <span>100</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Asistencia Mínima ({{ criterios.asistenciaMinima }}%)
+        </label>
+        <input type="range" [(ngModel)]="criterios.asistenciaMinima" min="0" max="100"
+               class="w-full">
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>0%</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Tareas Entregadas Mínimo ({{ criterios.tareasMinimas }}%)
+        </label>
+        <input type="range" [(ngModel)]="criterios.tareasMinimas" min="0" max="100"
+               class="w-full">
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>0%</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Exámenes Aprobados Mínimo ({{ criterios.examenesAprobadosMinimo }}%)
+        </label>
+        <input type="range" [(ngModel)]="criterios.examenesAprobadosMinimo" min="0" max="100"
+               class="w-full">
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>0%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-6">
+      <p class="text-sm text-gray-700">
+        <span class="font-semibold">Nota:</span> Los participantes serán evaluados como "APTO" solo si cumplen TODOS los criterios establecidos.
+      </p>
+    </div>
+
+    <div class="flex gap-4">
+      <button (click)="cerrarModal()"
+              class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+        Cancelar
+      </button>
+      <button (click)="reevaluarTodos()"
+              class="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold">
+        Aplicar y Reevaluar
+      </button>
+    </div>
+  </div>
+</div>

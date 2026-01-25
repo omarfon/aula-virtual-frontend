@@ -1,0 +1,247 @@
+<div class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 py-6 sm:py-8 px-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Asignación de Cursos</h1>
+            <p class="text-sm sm:text-base text-gray-600">Gestiona las asignaciones de cursos para tus alumnos</p>
+        </div>
+
+        <!-- Vista Lista de Alumnos -->
+        <div *ngIf="vistaActual === 'lista'">
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-orange-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Total Alumnos</p>
+                            <p class="text-3xl font-bold text-gray-800">{{ alumnos.length }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">👥</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Alumnos con Cursos</p>
+                            <p class="text-3xl font-bold text-blue-600">{{ getAlumnosConCursos() }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">📚</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Total Asignaciones</p>
+                            <p class="text-3xl font-bold text-green-600">{{ getTotalCursosAsignados() }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">✅</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Búsqueda -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">🔍 Buscar alumno</label>
+                        <input type="text" [(ngModel)]="terminoBusquedaAlumno" 
+                            placeholder="Nombre o email..."
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+
+                    <!-- Filtro por estado -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">📊 Estado</label>
+                        <select [(ngModel)]="filtroEstado" 
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="todos">Todos los estados</option>
+                            <option value="activo">Activos</option>
+                            <option value="inactivo">Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-sm text-gray-600">
+                    Mostrando <span class="font-bold text-orange-600">{{ alumnosFiltrados.length }}</span> de {{ alumnos.length }} alumnos
+                </p>
+            </div>
+
+            <!-- Lista de Alumnos -->
+            <div class="space-y-4">
+                <div *ngFor="let alumno of alumnosFiltrados" 
+                    class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all">
+                    
+                    <div class="flex flex-col md:flex-row justify-between gap-4">
+                        <!-- Información del alumno -->
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {{ alumno.nombre.charAt(0) }}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">{{ alumno.nombre }}</h3>
+                                    <p class="text-sm text-gray-600">{{ alumno.email }}</p>
+                                </div>
+                                <span class="ml-2 px-3 py-1 rounded-full text-xs font-semibold"
+                                    [ngClass]="alumno.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                    {{ alumno.estado | titlecase }}
+                                </span>
+                            </div>
+
+                            <div class="ml-15 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <p class="text-sm text-gray-700">
+                                    <span class="font-semibold">📞 Teléfono:</span> {{ alumno.telefono }}
+                                </p>
+                                <p class="text-sm text-gray-700">
+                                    <span class="font-semibold">📅 Registro:</span> {{ alumno.fechaRegistro | date:'dd/MM/yyyy' }}
+                                </p>
+                            </div>
+
+                            <!-- Cursos asignados -->
+                            <div class="mt-4 ml-15">
+                                <p class="text-sm font-semibold text-gray-700 mb-2">Cursos asignados ({{ getCursosAsignados(alumno.id).length }}):</p>
+                                <div *ngIf="getCursosAsignados(alumno.id).length === 0" class="text-sm text-gray-500 italic">
+                                    Sin cursos asignados
+                                </div>
+                                <div *ngIf="getCursosAsignados(alumno.id).length > 0" class="flex flex-wrap gap-2">
+                                    <div *ngFor="let curso of getCursosAsignados(alumno.id)" 
+                                        class="group relative">
+                                        <span class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-medium">
+                                            📚 {{ curso.titulo }}
+                                            <button (click)="desasignarCurso(alumno.id, curso.id)"
+                                                class="ml-1 text-red-600 hover:text-red-800 font-bold">
+                                                ×
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón de acción -->
+                        <div class="flex items-center">
+                            <button (click)="seleccionarAlumno(alumno)"
+                                class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-medium whitespace-nowrap">
+                                ➕ Asignar Cursos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="alumnosFiltrados.length === 0" class="bg-white rounded-xl shadow-lg p-12 text-center">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">No se encontraron alumnos</h3>
+                    <p class="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Asignar Cursos -->
+        <div *ngIf="vistaActual === 'asignar' && alumnoSeleccionado" class="space-y-6">
+            <!-- Botón volver -->
+            <button (click)="volverALista()" 
+                class="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all font-medium">
+                ← Volver a la lista
+            </button>
+
+            <!-- Información del alumno seleccionado -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                        {{ alumnoSeleccionado.nombre.charAt(0) }}
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">{{ alumnoSeleccionado.nombre }}</h2>
+                        <p class="text-gray-600">{{ alumnoSeleccionado.email }}</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-4">
+                    <p class="text-sm text-gray-700 mb-2">
+                        <span class="font-semibold">Cursos ya asignados:</span> {{ getCursosAsignados(alumnoSeleccionado.id).length }}
+                    </p>
+                    <div *ngIf="getCursosAsignados(alumnoSeleccionado.id).length > 0" class="flex flex-wrap gap-2">
+                        <span *ngFor="let curso of getCursosAsignados(alumnoSeleccionado.id)" 
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
+                            ✓ {{ curso.titulo }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buscador de cursos -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">🔍 Buscar cursos disponibles</label>
+                <input type="text" [(ngModel)]="terminoBusquedaCurso" 
+                    placeholder="Buscar por título, instructor o categoría..."
+                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+
+            <!-- Cursos disponibles para asignar -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        Cursos Disponibles ({{ cursosDisponibles.length }})
+                    </h3>
+                    <div class="text-sm text-gray-600">
+                        <span class="font-semibold text-orange-600">{{ cursosSeleccionados.size }}</span> seleccionado(s)
+                    </div>
+                </div>
+
+                <div *ngIf="cursosDisponibles.length === 0" class="text-center py-8 text-gray-500">
+                    <div class="text-4xl mb-2">📚</div>
+                    <p>No hay cursos disponibles para asignar</p>
+                    <p class="text-sm mt-1">Este alumno ya tiene todos los cursos asignados</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div *ngFor="let curso of cursosDisponibles" 
+                        class="border-2 rounded-xl p-4 cursor-pointer transition-all"
+                        [ngClass]="cursosSeleccionados.has(curso.id) ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'"
+                        (click)="toggleCursoSeleccion(curso.id)">
+                        
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-1">
+                                <input type="checkbox" 
+                                    [checked]="cursosSeleccionados.has(curso.id)"
+                                    class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                                    (click)="$event.stopPropagation()">
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800 mb-2">{{ curso.titulo }}</h4>
+                                <div class="space-y-1 text-sm text-gray-600">
+                                    <p><span class="font-semibold">👨‍🏫 Instructor:</span> {{ curso.instructor }}</p>
+                                    <p><span class="font-semibold">📂 Categoría:</span> {{ curso.categoria }}</p>
+                                    <p><span class="font-semibold">📊 Nivel:</span> {{ curso.nivel }}</p>
+                                    <p><span class="font-semibold">⏱️ Duración:</span> {{ curso.duracionTotal }}h</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-4 justify-end">
+                <button (click)="volverALista()" 
+                    class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all font-medium">
+                    Cancelar
+                </button>
+                <button (click)="asignarCursos()" 
+                    [disabled]="cursosSeleccionados.size === 0"
+                    class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-medium disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    ✅ Asignar {{ cursosSeleccionados.size }} Curso(s)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
