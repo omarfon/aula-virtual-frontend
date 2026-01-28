@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface IniciarIntentoDto {
@@ -35,12 +35,67 @@ export interface IntentoExamen {
   comentarioAlumno?: string;
 }
 
+export interface EntregaDocenteFiltro {
+  cursoId?: string;
+  examenId?: string;
+  estado?: 'pendiente' | 'en-revision' | 'corregido' | 'todos';
+  busqueda?: string;
+}
+
+export interface EntregaDocenteResumen {
+  examenAlumnoId: string;
+  intentoId?: string;
+  alumnoId?: string;
+  alumnoNombre?: string;
+  alumnoEmail?: string;
+  cursoId?: string;
+  cursoNombre?: string;
+  examenId?: string;
+  examenTitulo?: string;
+  estado?: 'pendiente' | 'en-revision' | 'corregido';
+  fechaEntrega?: string;
+  numeroIntento?: number;
+  tiempoEmpleado?: number;
+  calificacion?: number;
+  puntajeTotal?: number;
+  porcentaje?: number;
+  retroalimentacionGeneral?: string;
+  corregidoPor?: string;
+  fechaCorreccion?: string;
+  respuestas?: any[];
+  [key: string]: unknown;
+}
+
+export interface EntregasDocenteResponse {
+  entregas?: EntregaDocenteResumen[];
+  data?: EntregaDocenteResumen[];
+  items?: EntregaDocenteResumen[];
+  results?: EntregaDocenteResumen[];
+  lista?: EntregaDocenteResumen[];
+  records?: EntregaDocenteResumen[];
+  estadisticas?: Record<string, unknown>;
+  resumen?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  filtros?: Record<string, unknown>;
+  opciones?: Record<string, unknown>;
+  cursos?: Array<Record<string, unknown>>;
+  examenes?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class IntentosExamenService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+  private readonly entregasDocentePaths = [
+    '/examenes/docentes/examenes-alumnos',
+    '/examenes/docentes/entregas',
+    '/docentes/examenes/entregas',
+    '/docentes/entregas',
+    '/examenes/docente/entregas'
+  ];
 
   /**
    * Iniciar un nuevo intento de examen
@@ -87,24 +142,29 @@ export class IntentosExamenService {
   }
 
   /**
-   * Listar intentos para corrección (vista docente)
-   * GET /examenes/intentos
+   * Listar entregas para corrección (vista docente)
+  * Prueba rutas docentes conocidas (/examenes/docentes/examenes-alumnos, /examenes/docentes/entregas, ...)
    */
-  listarIntentosCorreccion(filtros?: { estado?: string; cursoId?: string; examenId?: string; alumnoId?: string; }): Observable<IntentoExamen[]> {
-    const url = `${this.apiUrl}/examenes/intentos`;
+  listarIntentosCorreccion(filtros?: EntregaDocenteFiltro): Observable<EntregasDocenteResponse> {
     let params = new HttpParams();
 
     if (filtros) {
       Object.entries(filtros).forEach(([clave, valor]) => {
-        if (valor) {
-          params = params.set(clave, valor);
+        if (valor !== undefined && valor !== null && `${valor}`.trim() !== '') {
+          params = params.set(clave, `${valor}`.trim());
         }
       });
     }
 
-    return this.http.get<IntentoExamen[]>(url, { params }).pipe(
-      catchError(error => this.handleError(error, 'listar intentos para corrección'))
-    );
+    return this.solicitarEntregasDocente(params);
+  }
+
+  /**
+   * Actualiza la corrección de una entrega docente
+  * Prueba rutas docentes conocidas (/examenes/docentes/examenes-alumnos/:id?, /examenes/docentes/entregas/:id, ...)
+   */
+  actualizarEntregaDocente(examenAlumnoId: string, data: Record<string, unknown>): Observable<any> {
+    return this.enviarCorreccionDocente(examenAlumnoId, data);
   }
 
   /**
@@ -152,5 +212,61 @@ export class IntentosExamenService {
     console.error('📊 Estado HTTP:', error.status);
     console.error('📋 URL solicitada:', error.url);
     return throwError(() => new Error(errorMessage));
+  }
+
+  private solicitarEntregasDocente(params: HttpParams, indice = 0, ultimoError?: any): Observable<EntregasDocenteResponse> {
+    if (indice >= this.entregasDocentePaths.length) {
+      return this.handleError(
+        ultimoError ?? {
+          status: 404,
+          message: 'No se encontraron endpoints disponibles para listar entregas de exámenes.',
+          url: `${this.apiUrl}${this.entregasDocentePaths[this.entregasDocentePaths.length - 1]}`
+        },
+        'listar entregas para corrección'
+      );
+    }
+
+    const url = `${this.apiUrl}${this.entregasDocentePaths[indice]}`;
+
+    return this.http.get<EntregasDocenteResponse>(url, { params }).pipe(
+      map((response) => response ?? {}),
+      catchError(error => {
+        if (error.status === 404 && indice < this.entregasDocentePaths.length - 1) {
+          console.warn(`[IntentosExamenService] Endpoint ${url} no encontrado (404). Probando ruta alternativa...`);
+          return this.solicitarEntregasDocente(params, indice + 1, error);
+        }
+        return this.handleError(error, 'listar entregas para corrección');
+      })
+    );
+  }
+
+  private enviarCorreccionDocente(examenAlumnoId: string, data: Record<string, unknown>, indice = 0, ultimoError?: any): Observable<any> {
+    if (indice >= this.entregasDocentePaths.length) {
+      return this.handleError(
+        ultimoError ?? {
+          status: 404,
+          message: 'No se encontraron endpoints disponibles para actualizar la corrección del examen.',
+          url: `${this.apiUrl}${this.entregasDocentePaths[this.entregasDocentePaths.length - 1]}/${encodeURIComponent(examenAlumnoId)}`
+        },
+        'actualizar entrega docente'
+      );
+    }
+
+    const basePath = this.entregasDocentePaths[indice];
+    if (basePath.includes('examenes-alumnos')) {
+      return this.enviarCorreccionDocente(examenAlumnoId, data, indice + 1, ultimoError);
+    }
+
+    const url = `${this.apiUrl}${basePath}/${encodeURIComponent(examenAlumnoId)}`;
+
+    return this.http.patch<any>(url, data).pipe(
+      catchError(error => {
+        if (error.status === 404 && indice < this.entregasDocentePaths.length - 1) {
+          console.warn(`[IntentosExamenService] Endpoint ${url} no encontrado (404). Probando ruta alternativa...`);
+          return this.enviarCorreccionDocente(examenAlumnoId, data, indice + 1, error);
+        }
+        return this.handleError(error, 'actualizar entrega docente');
+      })
+    );
   }
 }

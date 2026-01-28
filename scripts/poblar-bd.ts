@@ -4,6 +4,7 @@
  */
 
 const API_URL = 'http://localhost:3001';
+const ALUMNO_DEMO_ID = 'c4532b80-e4d2-4b29-948c-70e11559fc3d'; // Alumno de prueba usado en scripts de verificación
 
 interface CreateCursoDto {
   titulo: string;
@@ -75,6 +76,160 @@ async function crearTema(cursoId: string, unidadId: string, tema: TemaDto) {
   return response.json();
 }
 
+async function obtenerCursos(): Promise<any[]> {
+  const response = await fetch(`${API_URL}/cursos`);
+
+  if (!response.ok) {
+    throw new Error(`No se pudo obtener la lista de cursos: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function obtenerMisExamenes(alumnoId: string): Promise<any[]> {
+  const response = await fetch(`${API_URL}/examenes/alumnos/${alumnoId}/mis-examenes`);
+  if (!response.ok) {
+    console.warn(`⚠️  No se pudieron obtener exámenes del alumno ${alumnoId}: ${response.status}`);
+    return [];
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function obtenerIntentosExamen(examenAlumnoId: string): Promise<any[]> {
+  const response = await fetch(`${API_URL}/examenes/examenes-alumno/${examenAlumnoId}/intentos`);
+  if (!response.ok) {
+    console.warn(`⚠️  No se pudieron obtener intentos para ${examenAlumnoId}: ${response.status}`);
+    return [];
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function iniciarIntento(examenAlumnoId: string): Promise<any | null> {
+  const response = await fetch(`${API_URL}/examenes/examenes-alumno/${examenAlumnoId}/intentos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ respuestas: [] })
+  });
+
+  if (!response.ok) {
+    console.warn(`⚠️  No se pudo iniciar intento para ${examenAlumnoId}: ${response.status}`);
+    return null;
+  }
+
+  return response.json();
+}
+
+async function entregarIntento(intentoId: string): Promise<any | null> {
+  const response = await fetch(`${API_URL}/examenes/intentos/${intentoId}/entregar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ respuestas: [], tiempoEmpleado: 1800 })
+  });
+
+  if (!response.ok) {
+    console.warn(`⚠️  No se pudo entregar intento ${intentoId}: ${response.status}`);
+    return null;
+  }
+
+  return response.json();
+}
+
+async function calificarIntento(intentoId: string, calificacion: number, retroalimentacion: string): Promise<any | null> {
+  const response = await fetch(`${API_URL}/examenes/intentos/${intentoId}/calificar`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ calificacion, retroalimentacion })
+  });
+
+  if (!response.ok) {
+    console.warn(`⚠️  No se pudo calificar intento ${intentoId}: ${response.status}`);
+    return null;
+  }
+
+  return response.json();
+}
+
+async function crearIntentoEjemplo(examenAlumnoId: string, opciones: { calificacion?: number; retroalimentacion?: string } = {}): Promise<void> {
+  const intentoIniciado = await iniciarIntento(examenAlumnoId);
+  if (!intentoIniciado?.id) {
+    return;
+  }
+
+  const intentoEntregado = await entregarIntento(intentoIniciado.id);
+  if (!intentoEntregado?.id) {
+    return;
+  }
+
+  if (typeof opciones.calificacion === 'number') {
+    await calificarIntento(
+      intentoEntregado.id,
+      opciones.calificacion,
+      opciones.retroalimentacion ?? 'Revisión automática generada por script de poblamiento.'
+    );
+  }
+}
+
+function resumirIntentos(intentos: any[]): { entregados: number; calificados: number } {
+  return intentos.reduce(
+    (acumulado, intento) => {
+      const estado = (intento?.estado ?? '').toLowerCase();
+      if (estado === 'entregado') {
+        acumulado.entregados += 1;
+      }
+      if (estado === 'calificado') {
+        acumulado.calificados += 1;
+      }
+      return acumulado;
+    },
+    { entregados: 0, calificados: 0 }
+  );
+}
+
+async function asegurarDatosCorreccion(): Promise<void> {
+  console.log('\n🧪 Verificando datos para corrección de exámenes...');
+
+  const examenesAsignados = await obtenerMisExamenes(ALUMNO_DEMO_ID);
+  console.log(`   • Exámenes asignados al alumno demo: ${examenesAsignados.length}`);
+
+  for (const examenAlumno of examenesAsignados) {
+    const examenTitulo = examenAlumno?.examen?.titulo ?? 'Examen sin título';
+    const examenAlumnoId = examenAlumno?.id;
+
+    if (!examenAlumnoId) {
+      continue;
+    }
+
+    let intentos = await obtenerIntentosExamen(examenAlumnoId);
+    const resumen = resumirIntentos(intentos);
+
+    if (resumen.entregados === 0) {
+      console.log(`   ➕ Generando intento entregado para "${examenTitulo}"`);
+      await crearIntentoEjemplo(examenAlumnoId);
+    }
+
+    intentos = await obtenerIntentosExamen(examenAlumnoId);
+    const resumenDespuesEntrega = resumirIntentos(intentos);
+
+    if (resumenDespuesEntrega.calificados === 0) {
+      console.log(`   ➕ Generando intento calificado para "${examenTitulo}"`);
+      await crearIntentoEjemplo(examenAlumnoId, {
+        calificacion: 85,
+        retroalimentacion: 'Intento calificado automáticamente para pruebas de corrección.'
+      });
+    }
+
+    const intentosFinales = await obtenerIntentosExamen(examenAlumnoId);
+    const resumenFinal = resumirIntentos(intentosFinales);
+
+    console.log(
+      `   ✓ ${examenTitulo}: ${intentosFinales.length} intentos (entregados: ${resumenFinal.entregados}, calificados: ${resumenFinal.calificados})`
+    );
+  }
+}
+
 async function verificarConexion() {
   console.log('🔍 Verificando conexión con el backend...');
   
@@ -83,6 +238,11 @@ async function verificarConexion() {
     let response = await fetch(`${API_URL}/cursos`);
     if (response.ok || response.status === 404) {
       console.log(`✅ Backend conectado en ${API_URL}/cursos`);
+      if (response.ok) {
+        const cursos = await response.json().catch(() => []);
+        const totalCursos = Array.isArray(cursos) ? cursos.length : 0;
+        console.log(`   • Cursos actualmente registrados: ${totalCursos}`);
+      }
       return true;
     }
     
@@ -92,6 +252,11 @@ async function verificarConexion() {
     if (response.ok || response.status === 404) {
       console.log(`✅ Backend conectado en ${API_URL_ALT}/cursos`);
       console.log(`⚠️  NOTA: El backend no usa el prefijo /api`);
+      if (response.ok) {
+        const cursos = await response.json().catch(() => []);
+        const totalCursos = Array.isArray(cursos) ? cursos.length : 0;
+        console.log(`   • Cursos actualmente registrados: ${totalCursos}`);
+      }
       return true;
     }
     
@@ -541,6 +706,12 @@ async function poblarBaseDeDatos() {
     console.log('   - 3 cursos creados');
     console.log('   - 21 unidades creadas (7 por curso)');
     console.log('   - 105 temas creados (5 por unidad, 35 por curso)');
+
+    const cursosBackend = await obtenerCursos();
+    console.log(`   - Cursos disponibles vía API ahora: ${cursosBackend.length}`);
+
+    await asegurarDatosCorreccion();
+
     console.log('\n✅ Datos listos para consumir desde el frontend\n');
     
   } catch (error: any) {
