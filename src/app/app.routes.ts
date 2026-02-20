@@ -12,7 +12,12 @@ import { AsignacionCursosComponent } from './pages/asignacion-cursos/asignacion-
 import { TomarExamenComponent } from './pages/examenes/tomar-examen.component';
 import { HistorialIntentosComponent } from './pages/examenes/historial-intentos.component';
 import { EntrenamientoLoginComponent } from './pages/entrenamiento-login/entrenamiento-login.component';
+import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
+import { PersonasComponent } from './pages/admin/maestros/personas/personas.component';
+import { GruposComponent } from './pages/admin/maestros/grupos/grupos.component';
+import { EmpresaComponent } from './pages/admin/maestros/empresa/empresa.component';
 import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -29,5 +34,19 @@ export const routes: Routes = [
   { path: 'resultados-participantes', component: ResultadosParticipantesComponent, canActivate: [authGuard] },
   { path: 'correccion-examenes', component: CorreccionExamenesComponent, canActivate: [authGuard] },
   { path: 'asignacion-cursos', component: AsignacionCursosComponent, canActivate: [authGuard] },
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [authGuard, adminGuard],
+    children: [
+      { path: '', redirectTo: 'maestros/personas', pathMatch: 'full' },
+      { path: 'maestros/personas', component: PersonasComponent },
+      { path: 'maestros/grupos', component: GruposComponent },
+      { path: 'maestros/empresa', component: EmpresaComponent },
+      { path: 'seguridad/usuarios', component: PersonasComponent }, // Reutiliza el componente personas
+      { path: 'seguridad/roles', component: PersonasComponent }, // Placeholder
+      { path: 'seguridad/permisos', component: PersonasComponent } // Placeholder
+    ]
+  },
   { path: '**', redirectTo: 'home' }
 ];

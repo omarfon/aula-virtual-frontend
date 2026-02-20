@@ -1,0 +1,78 @@
+<aside [class.collapsed]="sidebarCollapsed" 
+       class="fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-800 to-slate-900 text-white shadow-2xl transition-all duration-300 z-40"
+       [ngClass]="sidebarCollapsed ? 'w-16' : 'w-64'">
+  
+  <!-- Toggle Button -->
+  <button (click)="toggleSidebar()" 
+          class="absolute -right-3 top-4 w-6 h-6 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center transition-all duration-300">
+    <svg class="w-4 h-4 text-white transition-transform duration-300" 
+         [ngClass]="sidebarCollapsed ? 'rotate-180' : ''"
+         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+    </svg>
+  </button>
+
+  <!-- Sidebar Header -->
+  <div class="px-4 py-6 border-b border-slate-700">
+    <h2 class="font-bold text-lg" [class.hidden]="sidebarCollapsed">
+      <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+        Administración
+      </span>
+    </h2>
+    <div *ngIf="sidebarCollapsed" class="text-2xl text-center">⚙️</div>
+  </div>
+
+  <!-- Menu Items -->
+  <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+    <ul class="space-y-1 px-2">
+      <li *ngFor="let item of menuItems">
+        <!-- Parent Menu Item -->
+        <div>
+          <button (click)="toggleSubmenu(item)"
+                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-700/50 transition-all duration-200 group"
+                  [class.bg-slate-700]="item.expanded">
+            <div class="flex items-center space-x-3">
+              <span class="text-xl group-hover:scale-110 transition-transform">{{ item.icon }}</span>
+              <span *ngIf="!sidebarCollapsed" class="font-medium text-sm">{{ item.label }}</span>
+            </div>
+            <svg *ngIf="!sidebarCollapsed && item.children" 
+                 class="w-4 h-4 transition-transform duration-200"
+                 [ngClass]="item.expanded ? 'rotate-90' : ''"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+
+          <!-- Submenu Items -->
+          <ul *ngIf="item.expanded && item.children && !sidebarCollapsed"
+              class="mt-1 ml-4 space-y-1 border-l-2 border-slate-700 pl-4">
+            <li *ngFor="let child of item.children">
+              <a [routerLink]="child.route"
+                 routerLinkActive="bg-blue-600 text-white shadow-lg"
+                 class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-all duration-200 text-sm group">
+                <span class="text-lg group-hover:scale-110 transition-transform">{{ child.icon }}</span>
+                <span class="font-medium">{{ child.label }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Footer -->
+  <div class="px-4 py-4 border-t border-slate-700" *ngIf="!sidebarCollapsed">
+    <div class="flex items-center space-x-2 text-xs text-slate-400">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>Panel de Administración</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Overlay para mobile -->
+<div *ngIf="!sidebarCollapsed" 
+     class="fixed inset-0 bg-black/50 z-30 md:hidden"
+     (click)="toggleSidebar()">
+</div>

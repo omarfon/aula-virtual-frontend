@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 p-6">
+<div class="exam-page min-h-screen bg-gray-50 px-6 pb-6">
   <!-- Loading State -->
   <div *ngIf="cargando" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
@@ -8,11 +8,11 @@
   </div>
 
   <!-- Examen Container -->
-  <div *ngIf="!cargando && examen && intentoActual" class="max-w-4xl mx-auto">
+    <div *ngIf="!cargando && examen && intentoActual" class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-      <div class="flex justify-between items-start mb-4">
-        <div>
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6 exam-header">
+      <div class="flex justify-between items-start mb-4 gap-6">
+        <div class="flex-1">
           <h1 class="text-2xl font-bold text-gray-800">{{ examen.titulo }}</h1>
           <p class="text-gray-600 mt-2">{{ examen.descripcion }}</p>
           <div class="flex gap-4 mt-3 text-sm text-gray-500">
@@ -22,13 +22,40 @@
           </div>
         </div>
 
-        <!-- Timer -->
-        <div *ngIf="tiempoRestante > 0" class="text-right">
-          <div class="text-sm text-gray-600 mb-1">Tiempo restante</div>
-          <div class="text-2xl font-bold" 
-               [class.text-red-600]="tiempoRestante <= 300"
-               [class.text-gray-800]="tiempoRestante > 300">
-            {{ formatearTiempo(tiempoRestante) }}
+        <div class="flex flex-col items-end gap-4">
+          <!-- Timer -->
+          <div *ngIf="duracionTotalAsignada > 0" class="text-right">
+            <div class="text-sm text-gray-600 mb-1">Tiempo restante</div>
+            <div class="text-2xl font-bold"
+                 [class.text-red-600]="tiempoRestante <= 300"
+                 [class.text-gray-800]="tiempoRestante > 300">
+              {{ formatearTiempo(tiempoRestante) }}
+            </div>
+          </div>
+
+          <div class="text-right text-sm text-gray-600">
+            <span [class.text-orange-600]="salidasPantallaCompleta > 0" [class.font-semibold]="salidasPantallaCompleta > 0">
+              Salidas detectadas: {{ salidasPantallaCompleta }}
+            </span>
+          </div>
+
+          <!-- Live Proctoring Feed -->
+          <div class="bg-gray-900 rounded-lg border border-gray-200 shadow-inner w-48 h-32 overflow-hidden relative">
+            <video #proctorVideo
+                   *ngIf="mediaStream"
+                   class="w-full h-full object-cover"
+                   autoplay
+                   muted
+                   playsinline>
+            </video>
+            <div *ngIf="!mediaStream"
+                 class="absolute inset-0 flex items-center justify-center text-xs text-gray-300 px-3 text-center">
+              Activando cámara para supervisión…
+            </div>
+            <div *ngIf="mediaStream"
+                 class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-[11px] text-gray-100 px-2 py-1 text-center">
+              Cámara activa
+            </div>
           </div>
         </div>
       </div>

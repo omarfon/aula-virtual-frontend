@@ -133,13 +133,29 @@ export class TareasComponent implements OnInit {
   }
 
   verDetalle(tarea: Tarea) {
+    console.log('🚀 [verDetalle] INICIANDO - Abriendo modal en modo VER');
+    
     this.modoModal = 'ver';
     this.tareaSeleccionada = tarea;
     this.archivoSubir = null;
     this.nombreArchivo = '';
     
+    console.log('🔍 [verDetalle] Estado inicial:', {
+      modoModal: this.modoModal,
+      tareaSeleccionada: this.tareaSeleccionada?.titulo
+    });
+    
+    // Intentar obtener el tareaAlumnoId de diferentes fuentes
     const tareaAlumnoId = tarea.tareaAlumnoId || tarea.id;
-    if (!tareaAlumnoId || !tarea.asignada) {
+    
+    console.log('🔍 [verDetalle] Intentando cargar entrega:', {
+      tareaAlumnoId,
+      asignada: tarea.asignada,
+      titulo: tarea.titulo
+    });
+    
+    if (!tareaAlumnoId) {
+      console.warn('⚠️ [verDetalle] No hay tareaAlumnoId disponible');
       Swal.fire({
         icon: 'info',
         title: 'Entrega no disponible',
@@ -149,18 +165,49 @@ export class TareasComponent implements OnInit {
     }
 
     // Obtener detalles completos de la entrega desde el backend
+    // Intentamos cargar sin importar el flag 'asignada' porque puede estar mal seteado
     this.tareasService.getDetalleEntrega(tareaAlumnoId).subscribe({
       next: (detalle) => {
+        console.log('✅ [verDetalle] Detalle de entrega cargado:', detalle);
         this.detalleEntrega = detalle;
-        console.log('📋 Detalle de entrega:', detalle);
+        
+        // Forzar detección de cambios
+        this.cdr.detectChanges();
+        
+        console.log('🔍 [verDetalle] Estado después de asignar:', {
+          detalleEntrega: this.detalleEntrega,
+          modoModal: this.modoModal,
+          tareaSeleccionada: this.tareaSeleccionada
+        });
+        
+        // Si se cargó correctamente, actualizar el flag asignada
+        if (detalle) {
+          tarea.asignada = true;
+        }
       },
       error: (error) => {
-        console.error('❌ Error al cargar detalle:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo cargar el detalle de la entrega'
+        console.error('❌ [verDetalle] Error al cargar detalle:', error);
+        console.log('🔍 [verDetalle] Detalles del error:', {
+          status: error.status,
+          message: error.message,
+          url: error.url
         });
+        
+        // Si el error es 404, significa que no hay entrega aún
+        if (error.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin entrega',
+            text: 'Aún no has entregado esta tarea. Haz clic en "Entregar" para subir tu trabajo.'
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al cargar entrega',
+            html: `No se pudo cargar el detalle de la entrega.<br><br><small>Error: ${error.status || 'desconocido'} - ${error.message || 'Sin detalles'}</small>`,
+            confirmButtonText: 'Entendido'
+          });
+        }
       }
     });
   }
@@ -230,9 +277,17 @@ export class TareasComponent implements OnInit {
   }
 
   reenviarTarea() {
+    // Cambiar al modo de entrega para permitir subir un nuevo archivo
     this.modoModal = 'entregar';
     this.archivoSubir = null;
     this.nombreArchivo = '';
+    
+    console.log('🔄 [reenviarTarea] Cambiando a modo entrega para actualizar archivo');
+    console.log('🔄 [reenviarTarea] Tarea:', {
+      id: this.tareaSeleccionada?.id,
+      tareaAlumnoId: this.tareaSeleccionada?.tareaAlumnoId,
+      archivoActual: this.tareaSeleccionada?.archivoEntregado
+    });
   }
 
   onFileSelected(event: any) {
@@ -659,15 +714,23 @@ export class TareasComponent implements OnInit {
     const fechaAsignacion = this.parsearFecha(
       asignacionAlumno?.fechaAsignacion || tareaBackend?.fechaAsignacion || tareaBackend?.fechaCreacion
     );
+    
+    // Determinar si la tarea está asignada/entregada
+    const tieneArchivoAdjunto = Boolean(asignacionAlumno?.archivoAdjunto || tareaBackend?.archivoAdjunto);
     const estadoBackend = asignacionAlumno?.estado || tareaBackend?.estado;
-    const estadoNormalizado = this.normalizarEstadoTarea(estadoBackend, fechaEntrega, Boolean(tareaAlumnoId));
+    const tieneEstadoEntregado = ['en-progreso', 'en_progreso', 'completada', 'calificada'].includes(
+      (estadoBackend || '').toLowerCase()
+    );
+    const estaAsignada = Boolean(tareaAlumnoId) || tieneArchivoAdjunto || tieneEstadoEntregado;
+    
+    const estadoNormalizado = this.normalizarEstadoTarea(estadoBackend, fechaEntrega, estaAsignada);
     const archivoAdjunto = asignacionAlumno?.archivoAdjunto || tareaBackend?.archivoAdjunto;
 
     return {
       id: tareaAlumnoId || tareaId,
       tareaId: tareaId,
       tareaAlumnoId: tareaAlumnoId || undefined,
-      asignada: Boolean(tareaAlumnoId),
+      asignada: estaAsignada,
       titulo: tareaBackend?.titulo || 'Tarea sin título',
       descripcion: tareaBackend?.descripcion || 'Sin descripción',
       curso: contexto.tituloCurso,

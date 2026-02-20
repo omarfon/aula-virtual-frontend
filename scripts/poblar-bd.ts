@@ -3,6 +3,8 @@
  * Ejecutar con: npx ts-node scripts/poblar-bd.ts
  */
 
+export {};
+
 const API_URL = 'http://localhost:3001';
 const ALUMNO_DEMO_ID = 'c4532b80-e4d2-4b29-948c-70e11559fc3d'; // Alumno de prueba usado en scripts de verificación
 
@@ -278,27 +280,16 @@ async function poblarBaseDeDatos() {
   const cursosData = [
     // CURSO 1: SEGURIDAD DE LA INFORMACIÓN
     {
-      titulo: 'Seguridad de la Información',
-      descripcion: 'Curso completo de ciberseguridad, protección de datos empresariales y gestión de riesgos informáticos',
-      instructor: 'Ing. Patricia Ramírez',
-      nivel: 'Intermedio' as const,
-      imagen: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&h=250&fit=crop',
-      categoria: 'Seguridad',
-      estudiantes: 0,
-      duracionTotal: 120,
-      unidades: [
-        {
-          numero: 1,
-          titulo: 'Introducción a la Ciberseguridad',
-          descripcion: 'Conceptos fundamentales de seguridad informática',
-          temas: [
-            { titulo: 'Conceptos Básicos de Seguridad', descripcion: 'Principios CIA: Confidencialidad, Integridad y Disponibilidad', duracionEstimada: 45, contenidos: [] },
-            { titulo: 'Tipos de Amenazas Cibernéticas', descripcion: 'Malware, phishing, ransomware y ataques DDoS', duracionEstimada: 50, contenidos: [] },
-            { titulo: 'Ingeniería Social', descripcion: 'Manipulación psicológica para obtener información', duracionEstimada: 40, contenidos: [] },
-            { titulo: 'Historia de la Ciberseguridad', descripcion: 'Evolución de las amenazas y defensas digitales', duracionEstimada: 35, contenidos: [] },
-            { titulo: 'Terminología Esencial', descripcion: 'Vocabulario técnico de seguridad informática', duracionEstimada: 30, contenidos: [] }
-          ]
-        },
+      curso: {
+        titulo: 'Seguridad de la Información',
+        descripcion: 'Curso completo de ciberseguridad, protección de datos empresariales y gestión de riesgos informáticos',
+        instructor: 'Ing. Patricia Ramírez',
+        nivel: 'Intermedio' as const,
+        imagen: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&h=250&fit=crop',
+        categoria: 'Seguridad',
+        estudiantes: 0,
+        duracionTotal: 120,
+        unidades: [],
         tareas: [
           {
             titulo: 'Análisis de Vulnerabilidades',

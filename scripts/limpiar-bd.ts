@@ -3,6 +3,8 @@
  * Ejecutar con: npx ts-node scripts/limpiar-bd.ts
  */
 
+export {};
+
 const API_URL = 'http://localhost:3001';
 
 async function limpiarBD() {

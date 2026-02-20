@@ -120,7 +120,16 @@
 
     <!-- Tabla de Participantes -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div class="overflow-x-auto">
+      <!-- Indicador de carga -->
+      <div *ngIf="cargandoDatos" class="flex items-center justify-center py-20">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-600 text-lg font-semibold">Cargando reporte de participantes...</p>
+        </div>
+      </div>
+
+      <!-- Contenido de la tabla -->
+      <div *ngIf="!cargandoDatos" class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
             <tr>
@@ -190,14 +199,14 @@
           </tbody>
         </table>
 
-        <div *ngIf="participantesFiltrados.length === 0" class="text-center py-12 text-gray-500">
+        <div *ngIf="!cargandoDatos && participantesFiltrados.length === 0" class="text-center py-12 text-gray-500">
           <p class="text-lg font-semibold">No se encontraron participantes</p>
           <p class="text-sm">Intenta ajustar los filtros de búsqueda</p>
         </div>
       </div>
 
       <!-- Paginación -->
-      <div *ngIf="totalPaginas > 1" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+      <div *ngIf="!cargandoDatos && totalPaginas > 1" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700">
             Mostrando <span class="font-semibold">{{ (paginaActual - 1) * elementosPorPagina + 1 }}</span>

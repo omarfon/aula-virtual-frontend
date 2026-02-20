@@ -96,6 +96,10 @@ export class NavbarComponent {
     return this.esAlumno || this.esAdministrador;
   }
 
+  get mostrarAccesoAdmin(): boolean {
+    return this.esAdministrador;
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as Node | null;

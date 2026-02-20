@@ -3,6 +3,8 @@
  * Ejecutar con: npx ts-node scripts/poblar-bd-simple.ts
  */
 
+export {};
+
 const API_URL = 'http://localhost:3001';
 
 // Función para generar contenido por defecto si no existe

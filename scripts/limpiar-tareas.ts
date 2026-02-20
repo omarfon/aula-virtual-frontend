@@ -3,6 +3,8 @@
  * Ejecutar con: npx ts-node scripts/limpiar-tareas.ts
  */
 
+export {};
+
 const API_URL = 'http://localhost:3001/cursos';
 
 async function obtenerCursos() {
@@ -82,7 +84,7 @@ async function limpiarTareas() {
 
   } catch (error: any) {
     console.error('\n❌ ERROR:', error.message);
-    process.exit(1);
+    return;
   }
 }
 

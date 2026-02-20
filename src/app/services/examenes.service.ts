@@ -136,6 +136,43 @@ export class ExamenesService {
   }
 
   /**
+   * Obtiene las preguntas de un examen con respuestas correctas
+   * GET /api/examenes/examenes/:examenId/preguntas
+   * NOTA: El endpoint público NO incluye respuestaCorrecta para evitar que alumnos vean las soluciones
+   * Este método es para uso administrativo o después de finalizar el examen
+   */
+  getPreguntasExamen(examenId: string): Observable<any[]> {
+    const url = `${environment.apiUrl}/examenes/examenes/${examenId}/preguntas`;
+    return this.http.get<any[]>(url).pipe(
+      tap(response => {
+        console.log('📋 Preguntas del examen obtenidas:', response?.length || 0);
+        if (response && response.length > 0) {
+          console.log('🔑 Campos de la primera pregunta:', Object.keys(response[0]));
+        }
+      }),
+      catchError(error => this.handleError(error))
+    );
+  }
+
+  /**
+   * Obtiene un examen completo por ID (ruta directa)
+   * GET /api/examenes/examenes/:examenId
+   * Útil para obtener información del examen sin necesitar el cursoId
+   */
+  getExamen(examenId: string): Observable<any> {
+    const url = `${environment.apiUrl}/examenes/examenes/${examenId}`;
+    return this.http.get<any>(url).pipe(
+      tap(response => {
+        console.log('📝 Examen obtenido:', response?.id);
+        if (response) {
+          console.log('🔑 Campos del examen:', Object.keys(response));
+        }
+      }),
+      catchError(error => this.handleError(error))
+    );
+  }
+
+  /**
    * Maneja errores HTTP
    */
   private handleError(error: any): Observable<never> {

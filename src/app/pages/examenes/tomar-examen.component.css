@@ -1,1 +1,19 @@
 /* Estilos personalizados para tomar examen */
+
+.exam-page {
+	min-height: 100vh;
+}
+
+.exam-header {
+	position: sticky;
+	top: 0;
+	z-index: 40;
+	background: #ffffff;
+	backdrop-filter: blur(6px);
+}
+
+@media (max-width: 640px) {
+	.exam-header {
+		top: 0;
+	}
+}

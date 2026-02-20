@@ -1,41 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
-
-interface CursoCompletado {
-  nombre: string;
-  calificacion: number;
-  fechaFinalizacion: Date;
-  asistencia: number; // porcentaje
-}
-
-interface Participante {
-  id: number;
-  nombre: string;
-  dni: string;
-  email: string;
-  telefono: string;
-  ciudad: string;
-  cursosCompletados: CursoCompletado[];
-  promedioGeneral: number;
-  asistenciaPromedio: number;
-  tareasEntregadas: number;
-  totalTareas: number;
-  examenesAprobados: number;
-  totalExamenes: number;
-  fechaInicio: Date;
-  fechaFinalizacion?: Date;
-  estado: 'en_curso' | 'completado' | 'abandonado';
-  aptitud: 'apto' | 'no_apto' | 'en_evaluacion';
-  observaciones?: string;
-}
+import { ReportesService, Participante, Estadisticas, CursoCompletado } from '../../services/reportes.service';
+import Swal from 'sweetalert2';
 
 interface CriteriosAptitud {
   promedioMinimo: number;
   asistenciaMinima: number;
-  tareasMinimas: number; // porcentaje
-  examenesAprobadosMinimo: number; // porcentaje
+  tareasMinimas: number;
+  examenesAprobadosMinimo: number;
 }
 
 @Component({
@@ -45,12 +19,27 @@ interface CriteriosAptitud {
   templateUrl: './resultados-participantes.component.html',
   styleUrls: ['./resultados-participantes.component.css']
 })
-export class ResultadosParticipantesComponent {
+export class ResultadosParticipantesComponent implements OnInit {
+  private readonly reportesService = inject(ReportesService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  
   Math = Math; // Para usar Math.min en el template
   
-  participantes: Participante[] = [
+  // Datos del backend
+  participantes: Participante[] = [];
+  estadisticasBackend: Estadisticas = {
+    total: 0,
+    aptos: 0,
+    noAptos: 0,
+    promedioGeneral: 0
+  };
+  
+  cargandoDatos = true;
+
+  // Datos mock de ejemplo (se pueden eliminar después de probar con backend real)
+  participantesMock: any[] = [
     {
-      id: 1,
+      id: '1',
       nombre: 'Carlos Mendoza Torres',
       dni: '72345678',
       email: 'carlos.mendoza@email.com',
@@ -475,10 +464,10 @@ export class ResultadosParticipantesComponent {
   ];
 
   criterios: CriteriosAptitud = {
-    promedioMinimo: 75,
+    promedioMinimo: 70,
     asistenciaMinima: 80,
-    tareasMinimas: 70,
-    examenesAprobadosMinimo: 75
+    tareasMinimas: 80,
+    examenesAprobadosMinimo: 70
   };
 
   // Filtros
@@ -495,6 +484,49 @@ export class ResultadosParticipantesComponent {
   participanteSeleccionado: Participante | null = null;
   modalDetalleAbierto = false;
   modalCriteriosAbierto = false;
+
+  ngOnInit() {
+    console.log('🚀 Inicializando componente de Resultados de Participantes');
+    this.cargarReporte();
+  }
+
+  /**
+   * Carga el reporte de participantes desde el backend
+   */
+  cargarReporte() {
+    this.cargandoDatos = true;
+    this.cdr.detectChanges(); // Forzar actualización para mostrar spinner
+    
+    console.log('📊 Cargando reporte con criterios:', this.criterios);
+    
+    this.reportesService.getReporteParticipantes(this.criterios).subscribe({
+      next: (response) => {
+        console.log('✅ Reporte cargado exitosamente:', response);
+        
+        this.participantes = response.participantes;
+        this.estadisticasBackend = response.estadisticas;
+        this.cargandoDatos = false;
+        
+        // Forzar detección de cambios después de cargar los datos
+        this.cdr.detectChanges();
+        
+        console.log(`📈 Total participantes: ${this.participantes.length}`);
+        console.log('🔄 Vista actualizada');
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar reporte:', error);
+        this.cargandoDatos = false;
+        this.cdr.detectChanges();
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al cargar reporte',
+          text: 'No se pudo cargar el reporte de participantes. Por favor, intenta nuevamente.',
+          confirmButtonText: 'Entendido'
+        });
+      }
+    });
+  }
 
   get participantesFiltrados(): Participante[] {
     const filtrados = this.participantes.filter(p => {
@@ -542,13 +574,16 @@ export class ResultadosParticipantesComponent {
   }
 
   get estadisticas() {
+    // Si tenemos datos del backend, usarlos
+    if (this.estadisticasBackend.total > 0) {
+      return this.estadisticasBackend;
+    }
+    
+    // Fallback a cálculo local
     return {
       total: this.participantes.length,
       aptos: this.participantes.filter(p => p.aptitud === 'apto').length,
       noAptos: this.participantes.filter(p => p.aptitud === 'no_apto').length,
-      enEvaluacion: this.participantes.filter(p => p.aptitud === 'en_evaluacion').length,
-      completados: this.participantes.filter(p => p.estado === 'completado').length,
-      enCurso: this.participantes.filter(p => p.estado === 'en_curso').length,
       promedioGeneral: this.calcularPromedioTotal()
     };
   }
@@ -632,9 +667,17 @@ export class ResultadosParticipantesComponent {
   }
 
   reevaluarTodos() {
-    this.participantes.forEach(p => this.reevaluarAptitud(p));
-    alert('Se ha reevaluado la aptitud de todos los participantes según los nuevos criterios');
+    console.log('🔄 Reevaluando con nuevos criterios:', this.criterios);
     this.cerrarModal();
+    this.cargarReporte(); // Recargar con los nuevos criterios
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Criterios actualizados',
+      text: 'Se ha reevaluado la aptitud de todos los participantes según los nuevos criterios',
+      timer: 2000,
+      showConfirmButton: false
+    });
   }
 
   exportarReporte() {
@@ -689,14 +732,18 @@ export class ResultadosParticipantesComponent {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Participantes');
 
-    // Agregar hoja de estadísticas
+    // Agregar hoja de estadísticas (calculadas localmente)
+    const enEvaluacion = this.participantes.filter(p => p.aptitud === 'en_evaluacion').length;
+    const completados = this.participantes.filter(p => p.estado === 'completado').length;
+    const enCurso = this.participantes.filter(p => p.estado === 'en_curso').length;
+    
     const estadisticas = [
       { Métrica: 'Total Participantes', Valor: this.estadisticas.total },
       { Métrica: 'Aptos', Valor: this.estadisticas.aptos },
       { Métrica: 'No Aptos', Valor: this.estadisticas.noAptos },
-      { Métrica: 'En Evaluación', Valor: this.estadisticas.enEvaluacion },
-      { Métrica: 'Completados', Valor: this.estadisticas.completados },
-      { Métrica: 'En Curso', Valor: this.estadisticas.enCurso },
+      { Métrica: 'En Evaluación', Valor: enEvaluacion },
+      { Métrica: 'Completados', Valor: completados },
+      { Métrica: 'En Curso', Valor: enCurso },
       { Métrica: 'Promedio General', Valor: this.estadisticas.promedioGeneral }
     ];
     const wsEstadisticas = XLSX.utils.json_to_sheet(estadisticas);
@@ -717,12 +764,30 @@ export class ResultadosParticipantesComponent {
     // Generar archivo
     const fecha = new Date().toISOString().split('T')[0];
     const nombreArchivo = `Reporte_Participantes_${fecha}.xlsx`;
-    XLSX.writeFile(wb, nombreArchivo);
-
-    alert('✅ Reporte exportado exitosamente');
+    
+    try {
+      XLSX.writeFile(wb, nombreArchivo);
+      
+      Swal.fire({
+        icon: 'success',
+        title: '¡Reporte exportado!',
+        text: `El archivo ${nombreArchivo} se ha descargado correctamente`,
+        timer: 3000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error al exportar reporte:', error);
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo Excel. Por favor, intenta nuevamente.',
+        confirmButtonText: 'Entendido'
+      });
+    }
   }
 
-  formatearFecha(fecha: Date): string {
+  formatearFecha(fecha: string | Date): string {
     return new Date(fecha).toLocaleDateString('es-PE', { 
       year: 'numeric', 
       month: '2-digit', 

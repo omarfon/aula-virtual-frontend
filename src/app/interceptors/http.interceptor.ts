@@ -60,7 +60,25 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       console.error('Error HTTP:', errorMessage);
-      return throwError(() => new Error(errorMessage));
+
+      const originalError = error.error;
+
+      const enrichedPayload =
+        typeof originalError === 'object' && originalError !== null
+          ? { ...originalError, originalError, friendlyMessage: errorMessage }
+          : { originalError, friendlyMessage: errorMessage };
+
+      const enrichedError = new HttpErrorResponse({
+        error: enrichedPayload,
+        headers: error.headers,
+        status: error.status,
+        statusText: error.statusText,
+        url: error.url ?? undefined
+      });
+
+      (enrichedError as any).friendlyMessage = errorMessage;
+
+      return throwError(() => enrichedError);
     })
   );
 };

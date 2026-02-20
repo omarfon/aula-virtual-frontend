@@ -107,20 +107,29 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
   }
 
   private extraerEntregasDocente(respuesta: unknown): any[] {
+    console.log('🔍 [extraerEntregasDocente] Iniciando extracción');
+    console.log('🔍 Respuesta completa:', JSON.stringify(respuesta, null, 2));
+    
     if (!respuesta) {
+      console.log('⚠️ Respuesta vacía o null');
       return [];
     }
 
     if (Array.isArray(respuesta)) {
+      console.log('✅ Respuesta es array directo, tamaño:', respuesta.length);
       return respuesta;
     }
 
     if (typeof respuesta !== 'object') {
+      console.log('⚠️ Respuesta no es objeto ni array');
       return [];
     }
 
     const origen = respuesta as Record<string, unknown>;
+    console.log('🔍 Claves disponibles en respuesta:', Object.keys(origen));
+    
     const clavesBusqueda = [
+      'examenesAlumnos',  // PRIMERO: es la clave específica del backend
       'entregas',
       'data',
       'items',
@@ -132,7 +141,6 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
       'docs',
       'rows',
       'values',
-      'examenesAlumnos',
       'entregasDocente',
       'entregasDocentes',
       'registros',
@@ -141,7 +149,15 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
 
     for (const clave of clavesBusqueda) {
       const valor = origen[clave];
+      console.log(`🔍 Probando clave "${clave}":`, {
+        existe: clave in origen,
+        esArray: Array.isArray(valor),
+        longitud: Array.isArray(valor) ? valor.length : 'N/A',
+        tipo: typeof valor
+      });
+      
       if (Array.isArray(valor) && valor.length) {
+        console.log(`✅ Encontrados ${valor.length} elementos en clave "${clave}"`);
         return valor as any[];
       }
       if (valor && typeof valor === 'object') {
@@ -861,6 +877,15 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
     const alumno = origen?.alumno || examenAlumno?.alumno || examenAlumno?.student || datosAdjunto?.alumno || {};
     const curso = origen?.curso || examenAlumno?.curso || examenAlumno?.cursoAsignado || datosAdjunto?.curso || examen?.curso || {};
 
+    // Logging detallado para debugging
+    console.log('🔍 [mapearEntrega] Procesando entrega:', {
+      origenId: origen?.id,
+      intentoId: intento?.id,
+      tieneRespuestasOrigen: Array.isArray(origen?.respuestas) ? origen.respuestas.length : 0,
+      tieneRespuestasIntento: Array.isArray(intento?.respuestas) ? intento.respuestas.length : 0,
+      tieneRespuestasAdjunto: Array.isArray(datosAdjunto?.respuestas) ? datosAdjunto.respuestas.length : 0
+    });
+
     const examenAlumnoId = this.obtenerId(
       origen?.examenAlumnoId,
       examenAlumno?.id,
@@ -939,11 +964,22 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
       ? origen.respuestas
       : Array.isArray(intento?.respuestas) && intento.respuestas.length
         ? intento.respuestas
-        : Array.isArray(origen?.ultimoIntentoRespuestas) && origen.ultimoIntentoRespuestas.length
-          ? origen.ultimoIntentoRespuestas
-          : Array.isArray(datosAdjunto?.respuestas) && datosAdjunto.respuestas.length
-            ? datosAdjunto.respuestas
-            : [];
+        : Array.isArray(examenAlumno?.respuestas) && examenAlumno.respuestas.length
+          ? examenAlumno.respuestas
+          : Array.isArray(origen?.ultimoIntentoRespuestas) && origen.ultimoIntentoRespuestas.length
+            ? origen.ultimoIntentoRespuestas
+            : Array.isArray(datosAdjunto?.respuestas) && datosAdjunto.respuestas.length
+              ? datosAdjunto.respuestas
+              : [];
+
+    console.log('📝 [mapearEntrega] Respuestas encontradas:', {
+      cantidad: respuestasBrutas.length,
+      fuente: Array.isArray(origen?.respuestas) && origen.respuestas.length ? 'origen' :
+              Array.isArray(intento?.respuestas) && intento.respuestas.length ? 'intento' :
+              Array.isArray(examenAlumno?.respuestas) && examenAlumno.respuestas.length ? 'examenAlumno' :
+              Array.isArray(origen?.ultimoIntentoRespuestas) && origen.ultimoIntentoRespuestas.length ? 'ultimoIntentoRespuestas' :
+              Array.isArray(datosAdjunto?.respuestas) && datosAdjunto.respuestas.length ? 'datosAdjunto' : 'ninguna'
+    });
 
     const preguntas = Array.isArray(origen?.preguntas)
       ? origen.preguntas
@@ -1008,13 +1044,35 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
 
     const estadoDocente = this.traducirEstado(this.obtenerTexto(origen?.estado, examenAlumno?.estado, intento?.estado));
 
+    console.log('🔍 [RETROALIMENTACION] Objeto origen completo:', origen);
+    console.log('🔍 [RETROALIMENTACION] Objeto examenAlumno completo:', examenAlumno);
+    console.log('🔍 [RETROALIMENTACION] Objeto intento completo:', intento);
+
+    // Buscar retroalimentación en TODOS los posibles lugares
     const retroalimentacion = this.obtenerTexto(
       origen?.retroalimentacionGeneral,
       origen?.retroalimentacion,
+      origen?.feedback,
+      origen?.comentario,
+      origen?.comentarioDocente,
+      origen?.observaciones,
+      examenAlumno?.retroalimentacionGeneral,
       examenAlumno?.retroalimentacion,
+      examenAlumno?.feedback,
+      intento?.retroalimentacionGeneral,
       intento?.retroalimentacion,
-      datosAdjunto?.retroalimentacion
+      intento?.feedback,
+      datosAdjunto?.retroalimentacionGeneral,
+      datosAdjunto?.retroalimentacion,
+      datosAdjunto?.feedback,
+      // Buscar en objetos anidados
+      origen?.ultimoIntento?.retroalimentacion,
+      origen?.ultimoIntento?.retroalimentacionGeneral,
+      origen?.intentoSeleccionado?.retroalimentacion,
+      origen?.detalleIntento?.retroalimentacion
     ) || '';
+
+    console.log('✅ [RETROALIMENTACION] Retroalimentación final:', retroalimentacion);
 
     const corregidoPor = this.obtenerTexto(
       origen?.corregidoPor,
@@ -1069,7 +1127,16 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
       return {};
     }
 
+    console.log('🎯 [obtenerIntentoNormalizado] Entrada:', {
+      tieneExamenAlumno: !!origen.examenAlumno,
+      tieneRespuestas: Array.isArray(origen.respuestas),
+      tieneCalificacion: origen.calificacion !== undefined,
+      tieneIntentos: Array.isArray(origen.intentos),
+      cantidadIntentos: Array.isArray(origen.intentos) ? origen.intentos.length : 0
+    });
+
     if (origen.examenAlumno && (Array.isArray(origen.respuestas) || origen.calificacion !== undefined)) {
+      console.log('✅ [obtenerIntentoNormalizado] Usando origen directamente');
       return origen;
     }
 
@@ -1083,6 +1150,14 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
     ];
 
     const intento = candidatos.find(item => item) || origen;
+    
+    console.log('✅ [obtenerIntentoNormalizado] Intento seleccionado:', {
+      fuente: candidatos.findIndex(item => item === intento) >= 0 ? 
+        ['intentoSeleccionado', 'intento', 'mejorIntento', 'ultimoIntento', 'intento calificado/entregado', 'primer intento'][candidatos.findIndex(item => item === intento)] : 
+        'origen',
+      tieneRespuestas: Array.isArray(intento?.respuestas),
+      cantidadRespuestas: Array.isArray(intento?.respuestas) ? intento.respuestas.length : 0
+    });
 
     return {
       ...intento,
@@ -1504,18 +1579,52 @@ export class CorreccionExamenesComponent implements OnInit, OnDestroy {
       porcentaje: this.examenSeleccionado.porcentaje
     };
 
-    const payload = this.construirPayloadCorreccion(this.examenSeleccionado);
+    // Payload simplificado para calificar
+    const payload = {
+      calificacion: Math.max(0, this.examenSeleccionado.puntajeObtenido ?? 0),
+      retroalimentacion: (this.examenSeleccionado.retroalimentacionGeneral ?? '').trim()
+    };
+
+    console.log('📝 Guardando corrección:', {
+      examenAlumnoId: this.examenSeleccionado.examenAlumnoId,
+      intentoId: this.examenSeleccionado.intentoId,
+      payload
+    });
+
     this.guardando = true;
 
     try {
-      await firstValueFrom(this.intentosService.actualizarEntregaDocente(this.examenSeleccionado.examenAlumnoId, payload));
+      // Si hay intentoId, calificar el intento específico; sino, calificar el examen completo
+      if (this.examenSeleccionado.intentoId) {
+        console.log('🎯 Calificando intento:', this.examenSeleccionado.intentoId);
+        await firstValueFrom(this.intentosService.calificarIntento(this.examenSeleccionado.intentoId, payload));
+      } else {
+        console.log('🎯 Calificando examen alumno:', this.examenSeleccionado.examenAlumnoId);
+        await firstValueFrom(this.intentosService.calificarExamenAlumno(this.examenSeleccionado.examenAlumnoId, payload));
+      }
+
+      // Actualizar el examen en la lista local para mostrar retroalimentación inmediatamente
+      const examenEnLista = this.examenes.find(e => e.examenAlumnoId === this.examenSeleccionado!.examenAlumnoId);
+      if (examenEnLista) {
+        examenEnLista.estado = 'corregido';
+        examenEnLista.puntajeObtenido = this.examenSeleccionado!.puntajeObtenido;
+        examenEnLista.porcentaje = this.examenSeleccionado!.porcentaje;
+        examenEnLista.retroalimentacionGeneral = this.examenSeleccionado!.retroalimentacionGeneral;
+        examenEnLista.corregidoPor = this.examenSeleccionado!.corregidoPor || this.docenteActualNombre || 'Docente';
+        examenEnLista.fechaCorreccion = new Date();
+        console.log('✅ Examen actualizado en lista local con retroalimentación:', examenEnLista.retroalimentacionGeneral);
+      }
+
       this.mensajeGuardado = {
         tipo: 'exito',
         texto: `Corrección guardada para ${resumen.estudiante}. Puntaje ${resumen.puntaje}/${resumen.total} (${resumen.porcentaje}%).`
       };
+      
+      // Recargar desde el backend para obtener la retroalimentación persistida
       await this.cargarIntentosCorreccion();
       this.volverALista();
     } catch (error) {
+      console.error('❌ Error al guardar corrección:', error);
       const mensaje = error instanceof Error ? error.message : 'No se pudo guardar la corrección.';
       this.mensajeGuardado = {
         tipo: 'error',

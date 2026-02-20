@@ -318,7 +318,7 @@ export class AdminCursosComponent implements OnInit {
       duracion: 60,
       preguntasLista: [],
       porcentajeAprobacion: 70,
-      intentosPermitidos: 3,
+      intentosPermitidos: 20,
       tipo: 'mixto'
     };
   }

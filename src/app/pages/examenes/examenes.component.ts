@@ -208,7 +208,7 @@ export class ExamenesComponent implements OnInit, OnDestroy {
       intentosPermitidos: item.intentosPermitidos || examenData.intentosPermitidos || 1,
       calificacion: item.calificacion,
       mejorIntento: item.mejorIntento,
-      estado: this.determinarEstado(item)
+      estado: this.obtenerEstadoNormalizado(item)
     } as ExamenAlumno;
 
     console.log('✅ ExamenAlumno mapeado:', {
@@ -221,7 +221,38 @@ export class ExamenesComponent implements OnInit, OnDestroy {
     return examenAlumno;
   }
 
-  determinarEstado(examenAlumno: any): 'pendiente' | 'en_progreso' | 'completado' | 'vencido' {
+  private obtenerEstadoNormalizado(item: any): 'pendiente' | 'en_progreso' | 'completado' | 'vencido' {
+    const estadoRemoto = (item?.estado || item?.estadoAsignacion || item?.status || '')
+      .toString()
+      .trim()
+      .toLowerCase();
+
+    switch (estadoRemoto) {
+      case 'completado':
+      case 'completo':
+      case 'finalizado':
+      case 'terminado':
+        return 'completado';
+      case 'pendiente':
+      case 'no_iniciado':
+      case 'no iniciado':
+      case 'sin_empezar':
+        return 'pendiente';
+      case 'vencido':
+      case 'expirado':
+        return 'vencido';
+      case 'en_progreso':
+      case 'en-progreso':
+      case 'en progreso':
+      case 'en curso':
+      case 'en_curso':
+        return 'en_progreso';
+    }
+
+    return this.determinarEstadoPorDatos(item);
+  }
+
+  private determinarEstadoPorDatos(examenAlumno: any): 'pendiente' | 'en_progreso' | 'completado' | 'vencido' {
     if (examenAlumno.calificacion !== null && examenAlumno.calificacion !== undefined) {
       return 'completado';
     }

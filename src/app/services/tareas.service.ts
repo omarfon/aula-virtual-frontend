@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Tarea, CreateTareaDto, UpdateTareaDto } from '../models/curso.model';
 
@@ -144,8 +144,21 @@ export class TareasService {
    */
   getDetalleEntrega(tareaAlumnoId: string): Observable<any> {
     const url = `${environment.apiUrl}/cursos/tareas-alumno/${tareaAlumnoId}`;
+    console.log('🔍 [getDetalleEntrega] Consultando:', url);
+    
     return this.http.get<any>(url).pipe(
-      catchError(error => this.handleError(error))
+      tap(response => {
+        console.log('✅ [getDetalleEntrega] Respuesta recibida:', response);
+      }),
+      catchError(error => {
+        console.error('❌ [getDetalleEntrega] Error:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message
+        });
+        return this.handleError(error);
+      })
     );
   }
 
@@ -272,5 +285,46 @@ export class TareasService {
 
     console.warn('Formato de respuesta no reconocido para tareas de alumno:', respuesta);
     return [];
+  }
+
+  /**
+   * Método de diagnóstico: intenta todas las rutas posibles para entregar una tarea
+   * Útil para debuggear problemas de backend
+   */
+  diagnosticarRutasEntrega(tareaAlumnoId: string): Observable<any> {
+    const rutas = [
+      { metodo: 'PATCH', url: `${environment.apiUrl}/tareas-alumno/${tareaAlumnoId}` },
+      { metodo: 'PATCH', url: `${environment.apiUrl}/cursos/tareas-alumno/${tareaAlumnoId}` },
+      { metodo: 'PATCH', url: `${environment.apiUrl}/tareas/${tareaAlumnoId}/entregar` },
+      { metodo: 'POST', url: `${environment.apiUrl}/tareas/${tareaAlumnoId}/entregar` },
+      { metodo: 'PUT', url: `${environment.apiUrl}/tareas-alumno/${tareaAlumnoId}` },
+      { metodo: 'PUT', url: `${environment.apiUrl}/cursos/tareas-alumno/${tareaAlumnoId}` }
+    ];
+
+    console.log('🔍 [diagnosticarRutasEntrega] Probando todas las rutas posibles...');
+    
+    const body = { estado: 'test', archivoAdjunto: 'test', comentarioAlumno: 'test de diagnóstico' };
+    const resultados: any[] = [];
+
+    rutas.forEach((ruta, index) => {
+      const request$ = ruta.metodo === 'PATCH' 
+        ? this.http.patch(ruta.url, body)
+        : ruta.metodo === 'POST'
+        ? this.http.post(ruta.url, body)
+        : this.http.put(ruta.url, body);
+
+      request$.subscribe({
+        next: (response) => {
+          console.log(`✅ [${index + 1}] FUNCIONA: ${ruta.metodo} ${ruta.url}`, response);
+          resultados.push({ ...ruta, status: 'success', response });
+        },
+        error: (error) => {
+          console.log(`❌ [${index + 1}] Error ${error.status}: ${ruta.metodo} ${ruta.url}`, error.message);
+          resultados.push({ ...ruta, status: 'error', error: error.status, message: error.message });
+        }
+      });
+    });
+
+    return of(resultados);
   }
 }
