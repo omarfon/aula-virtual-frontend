@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://tu-api-produccion.com/api' // Ajusta según tu API de producción
+  apiUrl: 'https://royal-lms-backend.rsdev.site' // Ajusta según tu API de producción
 };
