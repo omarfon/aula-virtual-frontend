@@ -121,7 +121,12 @@ node scripts/limpiar-entregas.js
 
 ### Configuración del Backend
 
-El frontend espera que el backend esté corriendo en `http://localhost:3001`
+**URLs del Backend:**
+- **Desarrollo:** `http://localhost:3001`
+- **Producción:** `https://royal-lms-backend.rsdev.site`
+
+⚠️ **CORS:** El backend debe estar configurado para permitir peticiones desde este frontend.  
+Ver [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md) para instrucciones detalladas.
 
 Endpoints principales:
 - `GET /cursos/:cursoId/tareas-alumno/:alumnoId` - Listar tareas del alumno
@@ -168,6 +173,59 @@ Ver [ENTREGA_TAREAS.md](docs/ENTREGA_TAREAS.md) para documentación completa de 
    - Adjuntar archivo (<5MB)
    - Entregar tarea
 
-## 📞 Soporte
+## � Despliegue
+
+### GitHub Pages (Recomendado)
+
+El proyecto está configurado para desplegarse automáticamente en GitHub Pages:
+
+**URL de producción:** `https://royalsystems-dev.github.io/royal-lms-frontend/`
+
+**Despliegue automático:**
+```bash
+git add .
+git commit -m "Deploy to GitHub Pages"
+git push origin main
+```
+
+El workflow de GitHub Actions se ejecutará automáticamente y desplegará el sitio en ~2-3 minutos.
+
+📖 **Guía completa:** [`DESPLIEGUE_GITHUB_PAGES.md`](./DESPLIEGUE_GITHUB_PAGES.md)
+
+### Otras Opciones de Despliegue
+
+- **IIS/Windows Server:** Ver [`DESPLIEGUE_IIS.md`](./DESPLIEGUE_IIS.md)
+- **Netlify/Vercel/Firebase:** Ver [`DESPLIEGUE_PRODUCCION.md`](./DESPLIEGUE_PRODUCCION.md)
+
+### Build para Producción
+
+```bash
+# Build general de producción
+npm run build:prod
+
+# Build específico para GitHub Pages
+npm run build:github
+```
+
+Los archivos de producción estarán en `dist/aula-virtual/browser/`
+
+## ⚙️ Configuración del Backend
+
+El backend debe configurar CORS para permitir peticiones desde el frontend desplegado:
+
+```typescript
+// En main.ts del backend NestJS
+app.enableCors({
+  origin: [
+    'http://localhost:4200',                   // Desarrollo
+    'https://royalsystems-dev.github.io',     // GitHub Pages
+  ],
+  credentials: true,
+});
+```
+
+📖 **Ver configuración completa:** [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md)
+
+## �📞 Soporte
 
 Para problemas o preguntas, consulta la documentación en `docs/`

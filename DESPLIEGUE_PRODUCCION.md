@@ -40,7 +40,29 @@ dist/aula-virtual/browser/
 
 ### 3. Opciones de Despliegue
 
-#### 🔹 Opción A: Servidor Apache
+#### 🌟 Opción A: GitHub Pages (Recomendado - Gratis)
+
+Despliegue automático con GitHub Actions:
+
+**URL:** `https://royalsystems-dev.github.io/royal-lms-frontend/`
+
+**Ventajas:**
+- ✅ Gratis y sin configuración de servidor
+- ✅ CI/CD automático con cada push a `main`
+- ✅ HTTPS incluido
+- ✅ CDN global de GitHub
+
+**Pasos:**
+1. Ver la guía completa: [`DESPLIEGUE_GITHUB_PAGES.md`](./DESPLIEGUE_GITHUB_PAGES.md)
+2. Habilitar GitHub Pages en Settings del repositorio
+3. Push a la rama `main` y el sitio se desplegará automáticamente
+
+```bash
+git push origin main
+# El workflow .github/workflows/deploy.yml se ejecuta automáticamente
+```
+
+#### 🔹 Opción B: Servidor Apache
 
 1. Copia el contenido de `dist/aula-virtual/browser/` a tu servidor
 2. Copia también el archivo `.htaccess` (ya generado)
@@ -50,13 +72,15 @@ dist/aula-virtual/browser/
    sudo systemctl restart apache2
    ```
 
-#### 🔹 Opción B: Servidor IIS (Windows)
+#### 🔹 Opción C: Servidor IIS (Windows)
+
+Ver guía completa: [`DESPLIEGUE_IIS.md`](./DESPLIEGUE_IIS.md)
 
 1. Copia el contenido de `dist/aula-virtual/browser/` a tu servidor
 2. Copia también el archivo `web.config` (ya generado)
 3. Instala el módulo URL Rewrite para IIS
 
-#### 🔹 Opción C: Nginx
+#### 🔹 Opción D: Nginx
 
 Crea un archivo de configuración:
 
@@ -97,7 +121,8 @@ npm install -g netlify-cli
 netlify deploy --prod --dir=dist/aula-virtual/browser
 ```
 
-**Firebase Hosting:**
+#### 🔹 Opción G: Firebase Hosting
+
 ```bash
 npm install -g firebase-tools
 firebase init hosting
@@ -106,15 +131,26 @@ firebase deploy
 
 ### 4. Configuración CORS en el Backend
 
+⚠️ **IMPORTANTE:** El CORS se configura en el backend, no en este repositorio.
+
+Tu backend está en: `https://royal-lms-backend.rsdev.site`
+
 Asegúrate que tu backend NestJS permita peticiones desde tu dominio de producción:
 
 ```typescript
-// En main.ts del backend
+// En main.ts del backend NestJS
 app.enableCors({
-  origin: ['https://tu-dominio-frontend.com'],
+  origin: [
+    'http://localhost:4200',              // Desarrollo local
+    'https://tu-dominio-frontend.com',    // Producción (reemplazar)
+  ],
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
 });
 ```
+
+📖 **Ver documentación completa:** [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md)
 
 ### 5. Checklist Final
 
@@ -226,9 +262,11 @@ ng build --configuration production
 
 **Problema:** Error de CORS
 - **Solución:** Configura el backend para permitir el dominio del frontend
+- **Ver:** [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md)
 
 ## 📚 Recursos Adicionales
 
 - [Angular Deployment Guide](https://angular.io/guide/deployment)
 - [NestJS CORS Configuration](https://docs.nestjs.com/security/cors)
 - [SSL Certificate with Let's Encrypt](https://letsencrypt.org/)
+- [Configuración CORS del Backend](./CONFIGURACION_CORS_BACKEND.md) ⭐

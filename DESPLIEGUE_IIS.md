@@ -233,6 +233,10 @@ Agregar al `web.config` después de las reglas existentes:
 
 ### PASO 9: Configurar CORS en el Backend
 
+⚠️ **IMPORTANTE:** El CORS se configura en el backend NestJS, no en este proyecto frontend.
+
+**Backend URL:** `https://royal-lms-backend.rsdev.site`
+
 En tu backend NestJS (`main.ts`):
 
 ```typescript
@@ -240,13 +244,15 @@ app.enableCors({
   origin: [
     'http://tu-dominio.com',
     'https://tu-dominio.com',
-    'http://localhost:4200', // Para desarrollo
+    'http://localhost:4200',              // Desarrollo local
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
 });
 ```
+
+📖 **Ver configuración completa:** [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md)
 
 ### PASO 10: Reiniciar y Verificar
 
@@ -348,15 +354,23 @@ icacls "C:\inetpub\wwwroot\aula-virtual" /grant "IIS APPPOOL\Aula Virtual:(OI)(C
 4. Verificar que no haya antivirus bloqueando
 
 ### Problema 6: CORS Error
-**Causa:** Backend no permite el origen del frontend
-**Solución:**
+**Causa:** Backend no permite el origen del frontend  
+**Solución:** Configura CORS en el backend NestJS
+
 ```typescript
 // En backend NestJS main.ts
 app.enableCors({
-  origin: 'https://tu-dominio.com',
+  origin: [
+    'https://tu-dominio.com',
+    'http://localhost:4200',
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
 });
 ```
+
+📖 **Ver documentación completa:** [`CONFIGURACION_CORS_BACKEND.md`](./CONFIGURACION_CORS_BACKEND.md)
 
 ### Problema 7: WebSocket error (si usas SignalR o Socket.io)
 **Solución:**
